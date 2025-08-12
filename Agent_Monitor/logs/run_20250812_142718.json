@@ -1,0 +1,97 @@
+[
+  {
+    "agent_name": "RequirementAnalyzer",
+    "initial_text_excerpt": "Task: code for fibonacci\nRequirements: Function must handle basic inputs.",
+    "initial_full_text": "Task: code for fibonacci\nRequirements: Function must handle basic inputs.",
+    "enhancement_rounds": [
+      {
+        "round": 1,
+        "enhanced_text_excerpt": "Task: code for fibonacci\nRequirements: Function must handle basic inputs.\n// Enhanced (heuristic): please implement details.",
+        "enhanced_full_text": "Task: code for fibonacci\nRequirements: Function must handle basic inputs.\n// Enhanced (heuristic): please implement details.",
+        "score": 0.75,
+        "judge_reason": "Heuristic: code present and non-trivial."
+      },
+      {
+        "round": 2,
+        "enhanced_text_excerpt": "Task: code for fibonacci\nRequirements: Function must handle basic inputs.\n// Enhanced (heuristic): please implement details.\n// Enhanced (heuristic): please implement details.",
+        "enhanced_full_text": "Task: code for fibonacci\nRequirements: Function must handle basic inputs.\n// Enhanced (heuristic): please implement details.\n// Enhanced (heuristic): please implement details.",
+        "score": 0.75,
+        "judge_reason": "Heuristic: code present and non-trivial."
+      }
+    ],
+    "initial_personal_score": 0.75,
+    "initial_judge_reason": "Heuristic: code present and non-trivial.",
+    "final_personal_score": 0.75,
+    "final_judge_reason": "Heuristic: code present and non-trivial.",
+    "final_full_text": "Task: code for fibonacci\nRequirements: Function must handle basic inputs.\n// Enhanced (heuristic): please implement details.\n// Enhanced (heuristic): please implement details."
+  },
+  {
+    "agent_name": "CodeGenerator",
+    "initial_text_excerpt": "// Dummy code placeholder for: code for fibonacci\n// Implement merge sort or relevant algorithm here...",
+    "initial_full_text": "// Dummy code placeholder for: code for fibonacci\n// Implement merge sort or relevant algorithm here...",
+    "enhancement_rounds": [],
+    "initial_personal_score": 0.85,
+    "initial_judge_reason": "Heuristic: code present and non-trivial. Keyword match increased score.",
+    "final_personal_score": 0.85,
+    "final_judge_reason": "Heuristic: code present and non-trivial. Keyword match increased score.",
+    "final_full_text": "// Dummy code placeholder for: code for fibonacci\n// Implement merge sort or relevant algorithm here..."
+  },
+  {
+    "agent_name": "CodeReviewer",
+    "initial_text_excerpt": "Placeholder code present — not implemented.",
+    "initial_full_text": "Placeholder code present — not implemented.",
+    "enhancement_rounds": [
+      {
+        "round": 1,
+        "enhanced_text_excerpt": "Placeholder code present — not implemented.\n// Enhanced (heuristic): please implement details.",
+        "enhanced_full_text": "Placeholder code present — not implemented.\n// Enhanced (heuristic): please implement details.",
+        "score": 0.75,
+        "judge_reason": "Heuristic: code present and non-trivial."
+      },
+      {
+        "round": 2,
+        "enhanced_text_excerpt": "Placeholder code present — not implemented.\n// Enhanced (heuristic): please implement details.\n// Enhanced (heuristic): please implement details.",
+        "enhanced_full_text": "Placeholder code present — not implemented.\n// Enhanced (heuristic): please implement details.\n// Enhanced (heuristic): please implement details.",
+        "score": 0.75,
+        "judge_reason": "Heuristic: code present and non-trivial."
+      }
+    ],
+    "initial_personal_score": 0.75,
+    "initial_judge_reason": "Heuristic: code present and non-trivial.",
+    "final_personal_score": 0.75,
+    "final_judge_reason": "Heuristic: code present and non-trivial.",
+    "final_full_text": "Placeholder code present — not implemented.\n// Enhanced (heuristic): please implement details.\n// Enhanced (heuristic): please implement details."
+  },
+  {
+    "agent_name": "UnitTestWriter",
+    "initial_text_excerpt": "## Dummy tests: assert True",
+    "initial_full_text": "## Dummy tests: assert True",
+    "enhancement_rounds": [
+      {
+        "round": 1,
+        "enhanced_text_excerpt": "## Dummy tests: assert True\n// Enhanced (heuristic): please implement details.",
+        "enhanced_full_text": "## Dummy tests: assert True\n// Enhanced (heuristic): please implement details.",
+        "score": 0.75,
+        "judge_reason": "Heuristic: code present and non-trivial."
+      },
+      {
+        "round": 2,
+        "enhanced_text_excerpt": "## Dummy tests: assert True\n// Enhanced (heuristic): please implement details.\n// Enhanced (heuristic): please implement details.",
+        "enhanced_full_text": "## Dummy tests: assert True\n// Enhanced (heuristic): please implement details.\n// Enhanced (heuristic): please implement details.",
+        "score": 0.75,
+        "judge_reason": "Heuristic: code present and non-trivial."
+      }
+    ],
+    "initial_personal_score": 0.5,
+    "initial_judge_reason": "Heuristic fallback: no LLM client configured.",
+    "final_personal_score": 0.75,
+    "final_judge_reason": "Heuristic: code present and non-trivial.",
+    "final_full_text": "## Dummy tests: assert True\n// Enhanced (heuristic): please implement details.\n// Enhanced (heuristic): please implement details."
+  },
+  {
+    "agent_name": "CodeExecutor",
+    "skipped": true,
+    "reason": "execution_results is structured; skipping judge/enhance.",
+    "payload_excerpt": "{'passed': 1, 'failed': 0, 'note': 'Simulated'}"
+  }
+]
