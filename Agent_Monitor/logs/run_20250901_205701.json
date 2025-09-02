@@ -1,0 +1,124 @@
+{
+  "agent_logs": [
+    {
+      "agent_name": "RequirementAnalyzer",
+      "initial_code": "Task: code in quick sort\nRequirements: Handle basic inputs.",
+      "final_code": "Task: code in quick sort\nRequirements: Handle basic inputs.",
+      "personal_score": 0.33999999999999997,
+      "factual_accuracy": 0.7,
+      "clarity": 0.7,
+      "safety": 0.7,
+      "code_correctness": 0.2,
+      "complexity": 0.6,
+      "enhancement_loops": 2,
+      "latency": 3.9029486179351807,
+      "token_usage": 14
+    },
+    {
+      "agent_name": "CodeGenerator",
+      "initial_code": "// Error calling LLM - fallback code placeholder for: code in quick sort",
+      "final_code": "// Error calling LLM - fallback code placeholder for: code in quick sort",
+      "personal_score": 0.9,
+      "factual_accuracy": 0.7,
+      "clarity": 0.5,
+      "safety": 0.7,
+      "code_correctness": 0.7,
+      "complexity": 0.6,
+      "enhancement_loops": 0,
+      "latency": 0.8598296642303467,
+      "token_usage": 18
+    },
+    {
+      "agent_name": "CodeReviewer",
+      "initial_code": "No review available (LLM call failed).",
+      "final_code": "No review available (LLM call failed).",
+      "personal_score": 0.24,
+      "factual_accuracy": 0.5,
+      "clarity": 0.7,
+      "safety": 0.7,
+      "code_correctness": 0.2,
+      "complexity": 0.3,
+      "enhancement_loops": 2,
+      "latency": 3.679950475692749,
+      "token_usage": 9
+    },
+    {
+      "agent_name": "UnitTestWriter",
+      "initial_code": "## Unit tests generation failed (LLM).",
+      "final_code": "## Unit tests generation failed (LLM).",
+      "personal_score": 0.24,
+      "factual_accuracy": 0.5,
+      "clarity": 0.7,
+      "safety": 0.7,
+      "code_correctness": 0.2,
+      "complexity": 0.3,
+      "enhancement_loops": 2,
+      "latency": 3.6517856121063232,
+      "token_usage": 9
+    },
+    {
+      "agent_name": "CodeExecutor",
+      "initial_code": null,
+      "final_code": null,
+      "personal_score": null,
+      "factual_accuracy": null,
+      "clarity": null,
+      "safety": null,
+      "code_correctness": null,
+      "complexity": null,
+      "enhancement_loops": 0,
+      "latency": 0.0,
+      "token_usage": 0
+    }
+  ],
+  "agent_features": {
+    "RequirementAnalyzer": {
+      "personal_score": 0.33999999999999997,
+      "loops": 2,
+      "latency": 3.9029486179351807,
+      "tokens": 14
+    },
+    "CodeGenerator": {
+      "personal_score": 0.9,
+      "loops": 0,
+      "latency": 0.8598296642303467,
+      "tokens": 18
+    },
+    "CodeReviewer": {
+      "personal_score": 0.24,
+      "loops": 2,
+      "latency": 3.679950475692749,
+      "tokens": 9
+    },
+    "UnitTestWriter": {
+      "personal_score": 0.24,
+      "loops": 2,
+      "latency": 3.6517856121063232,
+      "tokens": 9
+    },
+    "CodeExecutor": {
+      "personal_score": 0.0,
+      "loops": 0,
+      "latency": 0.0,
+      "tokens": 0
+    }
+  },
+  "graph_edges": [
+    [
+      "RequirementAnalyzer",
+      "CodeGenerator"
+    ],
+    [
+      "CodeGenerator",
+      "CodeReviewer"
+    ],
+    [
+      "CodeReviewer",
+      "UnitTestWriter"
+    ],
+    [
+      "UnitTestWriter",
+      "CodeExecutor"
+    ]
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "agent_logs": [
+    {
+      "agent_name": "RequirementAnalyzer",
+      "initial_code": "Task: quick sort in java\nRequirements: Handle basic inputs.",
+      "final_code": "Task: quick sort in java\nRequirements: Handle basic inputs.",
+      "personal_score": 0.33999999999999997,
+      "factual_accuracy": 0.7,
+      "clarity": 0.7,
+      "safety": 0.7,
+      "code_correctness": 0.2,
+      "complexity": 0.6,
+      "enhancement_loops": 2,
+      "latency": 3.105247974395752,
+      "token_usage": 14
+    }
+  ],
+  "agent_features": {
+    "RequirementAnalyzer": {
+      "personal_score": 0.33999999999999997,
+      "loops": 2,
+      "latency": 3.105247974395752,
+      "tokens": 14
+    }
+  },
+  "graph_edges": []
+}

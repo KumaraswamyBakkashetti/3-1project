@@ -1,0 +1,27 @@
+{
+  "agent_logs": [
+    {
+      "agent_name": "RequirementAnalyzer",
+      "initial_code": "Task: code generation for quick sort\nRequirements: Handle basic inputs.",
+      "final_code": "Task: code generation for quick sort\nRequirements: Handle basic inputs.",
+      "personal_score": 0.7,
+      "factual_accuracy": 0.7,
+      "clarity": 0.7,
+      "safety": 0.7,
+      "code_correctness": 0.2,
+      "complexity": 0.6,
+      "enhancement_loops": 2,
+      "latency": 4.019270181655884,
+      "token_usage": 17
+    }
+  ],
+  "agent_features": {
+    "RequirementAnalyzer": {
+      "personal_score": 0.7,
+      "loops": 2,
+      "latency": 4.019270181655884,
+      "tokens": 17
+    }
+  },
+  "graph_edges": []
+}
