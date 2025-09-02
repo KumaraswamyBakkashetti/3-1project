@@ -100,14 +100,22 @@ class UnitTestWriter:
 
 
 class CodeExecutor:
-    def __init__(self):
-        # Execution sandbox intentionally not integrated here for safety.
-        pass
+    def __init__(self, llm=None):
+        self.llm = llm
 
     def run(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        print("\n[Agent 5] Executing code & running tests (simulation)...")
-        # Simulated execution result — replace by a sandboxed runner later if needed.
-        data["execution_results"] = {"passed": 1, "failed": 0, "note": "Simulated"}
-        print("--- Execution Results ---\n", data["execution_results"])
+        print("\n[Agent 5] executing tests...")
+        code = data.get("code", "")
+        test = data.get("tests", "")
+        if self.llm:
+            try:
+                resp = self.llm.generate_content(f"execute these tests cases {test} for the following code:\n{code} and list out how many failed and how many passed and give code if all passed.")
+                result = resp.strip()
+            except Exception:
+                result = "## Unit tests generation failed (LLM)."
+        else:
+            # Dummy tests placeholder
+            result = "## Dummy tests: assert True"
+        data["result"] = result
         return data
 

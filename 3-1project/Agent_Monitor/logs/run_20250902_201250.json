@@ -1,0 +1,42 @@
+[
+  {
+    "agent_name": "RequirementAnalyzer",
+    "initial_score": 0.0,
+    "initial_code": "Task: write code for prime in python\nRequirements: Handle basic inputs.",
+    "final_score": 0.0,
+    "final_code": "Task: write code for prime in python\nRequirements: Handle basic inputs.",
+    "collective_score": 0.0
+  },
+  {
+    "agent_name": "CodeGenerator",
+    "initial_score": 0.0,
+    "initial_code": "// Error calling LLM - fallback code placeholder for: write code for prime in python",
+    "final_score": 0.0,
+    "final_code": "// Error calling LLM - fallback code placeholder for: write code for prime in python",
+    "collective_score": 0.0
+  },
+  {
+    "agent_name": "CodeReviewer",
+    "initial_score": 0.0,
+    "initial_code": "No review available (LLM call failed).",
+    "final_score": 0.0,
+    "final_code": "No review available (LLM call failed).",
+    "collective_score": 0.0
+  },
+  {
+    "agent_name": "UnitTestWriter",
+    "initial_score": 0.0,
+    "initial_code": "## Unit tests generation failed (LLM).",
+    "final_score": 0.0,
+    "final_code": "## Unit tests generation failed (LLM).",
+    "collective_score": 0.0
+  },
+  {
+    "agent_name": "CodeExecutor",
+    "initial_score": 0.0,
+    "initial_code": "// Error calling LLM - fallback code placeholder for: write code for prime in python",
+    "final_score": 0.0,
+    "final_code": "// Error calling LLM - fallback code placeholder for: write code for prime in python",
+    "collective_score": 0.0
+  }
+]
