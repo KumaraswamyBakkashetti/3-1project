@@ -1,0 +1,37 @@
+[
+  {
+    "agent_name": "RequirementAnalyzer",
+    "initial_score": 0.75,
+    "initial_code": "Task: wrtie a code for factorial\nRequirements: Function must handle basic inputs.",
+    "final_score": 0.75,
+    "final_code": "Task: wrtie a code for factorial\nRequirements: Function must handle basic inputs.\n// Enhanced (heuristic): please implement details.\n// Enhanced (heuristic): please implement details."
+  },
+  {
+    "agent_name": "CodeGenerator",
+    "initial_score": 0.85,
+    "initial_code": "// Dummy code placeholder for: wrtie a code for factorial\n// Implement merge sort or relevant algorithm here...",
+    "final_score": 0.85,
+    "final_code": "// Dummy code placeholder for: wrtie a code for factorial\n// Implement merge sort or relevant algorithm here..."
+  },
+  {
+    "agent_name": "CodeReviewer",
+    "initial_score": 0.75,
+    "initial_code": "Placeholder code present — not implemented.",
+    "final_score": 0.75,
+    "final_code": "Placeholder code present — not implemented.\n// Enhanced (heuristic): please implement details.\n// Enhanced (heuristic): please implement details."
+  },
+  {
+    "agent_name": "UnitTestWriter",
+    "initial_score": 0.5,
+    "initial_code": "## Dummy tests: assert True",
+    "final_score": 0.75,
+    "final_code": "## Dummy tests: assert True\n// Enhanced (heuristic): please implement details.\n// Enhanced (heuristic): please implement details."
+  },
+  {
+    "agent_name": "CodeExecutor",
+    "initial_score": null,
+    "initial_code": null,
+    "final_score": null,
+    "final_code": null
+  }
+]
