@@ -1,0 +1,17 @@
+{
+  "agents": {
+    "RequirementAnalyzer": {
+      "initial": 0.0,
+      "final": 0.0
+    },
+    "QAAnswerer": {
+      "initial": 0.0,
+      "final": 0.0
+    },
+    "QAReviewer": {
+      "initial": 0.0,
+      "final": 0.0
+    }
+  },
+  "collective_score": 0.5
+}

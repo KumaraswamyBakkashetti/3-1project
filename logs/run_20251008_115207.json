@@ -1,0 +1,83 @@
+{
+  "agent_logs": [
+    {
+      "agent_name": "RequirementAnalyzer",
+      "initial_code": "Task: James decides to run 3 sprints 3 times a week.  He runs 60 meters each sprint.  How many total meters does he run a week?\nRequirements: Handle basic inputs.",
+      "final_code": "Task: James decides to run 3 sprints 3 times a week.  He runs 60 meters each sprint.  How many total meters does he run a week?\nRequirements: Handle basic inputs.",
+      "initial_personal_score": 0.0,
+      "final_personal_score": 0.0,
+      "personal_score": 0.0,
+      "factual_accuracy": 0.0,
+      "clarity": 0.0,
+      "safety": 0.0,
+      "code_correctness": 0.0,
+      "complexity": 0.0,
+      "enhancement_loops": 2,
+      "latency": 2.7194178104400635,
+      "token_usage": 40
+    },
+    {
+      "agent_name": "QAAnswerer",
+      "initial_code": "LLM failure: no answer.",
+      "final_code": "LLM failure: no answer.",
+      "initial_personal_score": 0.0,
+      "final_personal_score": 0.0,
+      "personal_score": 0.0,
+      "factual_accuracy": 0.0,
+      "clarity": 0.0,
+      "safety": 0.0,
+      "code_correctness": 0.0,
+      "complexity": 0.0,
+      "enhancement_loops": 2,
+      "latency": 2.799041986465454,
+      "token_usage": 5
+    },
+    {
+      "agent_name": "QAReviewer",
+      "initial_code": "No review (LLM call failed).",
+      "final_code": "No review (LLM call failed).",
+      "initial_personal_score": 0.0,
+      "final_personal_score": 0.0,
+      "personal_score": 0.0,
+      "factual_accuracy": 0.0,
+      "clarity": 0.0,
+      "safety": 0.0,
+      "code_correctness": 0.0,
+      "complexity": 0.0,
+      "enhancement_loops": 2,
+      "latency": 2.7845160961151123,
+      "token_usage": 7
+    }
+  ],
+  "agent_features": {
+    "RequirementAnalyzer": {
+      "personal_score": 0.0,
+      "loops": 2,
+      "latency": 2.7194178104400635,
+      "tokens": 40
+    },
+    "QAAnswerer": {
+      "personal_score": 0.0,
+      "loops": 2,
+      "latency": 2.799041986465454,
+      "tokens": 5
+    },
+    "QAReviewer": {
+      "personal_score": 0.0,
+      "loops": 2,
+      "latency": 2.7845160961151123,
+      "tokens": 7
+    }
+  },
+  "graph_edges": [
+    [
+      "RequirementAnalyzer",
+      "QAAnswerer"
+    ],
+    [
+      "QAAnswerer",
+      "QAReviewer"
+    ]
+  ],
+  "prompt": "James decides to run 3 sprints 3 times a week.  He runs 60 meters each sprint.  How many total meters does he run a week?"
+}
