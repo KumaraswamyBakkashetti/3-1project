@@ -1,0 +1,6 @@
+avg_personal_score,min_personal_score,max_loops,total_latency,total_token_usage,num_agents_triggered_enhancement,num_nodes,num_edges,clustering_coefficient,transitivity,avg_degree_centrality,avg_betweenness_centrality,avg_closeness_centrality,pagerank_entropy,heterogeneity_score,collective_score,humaneval_score,gsm8k_score,mmlu_score,label_mas_score
+0.63,0.4,2,25.48,1384,3,5,4,0.18,0.22,0.36,0.14,0.27,2.16,0.008,0.65,0.72,0.58,0.61,0.63
+0.71,0.52,3,32.15,1876,5,6,5,0.22,0.28,0.42,0.18,0.31,2.45,0.011,0.73,0.78,0.65,0.68,0.72
+0.55,0.35,1,18.92,1102,1,4,3,0.15,0.18,0.3,0.11,0.23,1.87,0.006,0.56,0.62,0.51,0.54,0.55
+0.68,0.45,2,27.63,1512,3,5,4,0.2,0.25,0.38,0.15,0.29,2.28,0.009,0.7,0.66,0.59,0.62,0.65
+0.6,0.38,2,23.21,1298,2,5,4,0.17,0.21,0.34,0.13,0.25,2.03,0.007,0.58,0.64,0.67,0.7,0.62
