@@ -1,638 +1,2121 @@
-# AgentMonitor: Multi-Agent System Performance Prediction# 🤖 AgentMonitor - Multi-Agent System Monitoring Framework
+# 🎯 README - Start Here!# 🔍 AgentMonitor - Complete Research Implementation# 🔍 AgentMonitor - Predictive Multi-Agent System Framework# AgentMonitor: Multi-Agent System Performance Prediction# 🤖 AgentMonitor - Multi-Agent System Monitoring Framework
 
 
 
-## 🎯 Overview**A Python framework for monitoring, scoring, and optimizing Multi-Agent Systems (MAS) using LLM-based evaluation and XGBoost predictions.**
+**Last Updated**: October 11, 2025  
 
+**Status**: ✅ Production Ready - Give to Your Friend!
 
+> **Production-ready** Multi-Agent System framework with enhancement loops, 16-feature extraction, and XGBoost prediction  
 
-**AgentMonitor** is a machine learning system that predicts Multi-Agent System (MAS) performance using XGBoost regression. It monitors MAS execution, extracts behavioral features, and predicts overall system effectiveness based on agent interactions and collective behavior.**Status**: ✅ **FULLY FUNCTIONAL**  
+---
 
-**Date**: October 8, 2025  
+> Based on research paper: *AgentMonitor: A Plug-and-Play Framework for Predictive and Secure Multi-Agent Systems* (arXiv:2408.14972)
 
-### Key Innovation**Author**: Kumaraswamy Bakkashetti
+## 📚 Documentation Guide
 
-Instead of evaluating MAS on expensive benchmark tasks, AgentMonitor predicts performance by analyzing:
+> A production-ready implementation based on the research paper: *AgentMonitor: A Plug-and-Play Framework for Predictive and Secure Multi-Agent Systems* (arXiv:2408.14972)
 
-- **System metrics**: Agent scores, enhancement loops, latency, token usage---
+### 👋 **For Your Friend** (Data Generation)
 
-- **Graph features**: Interaction network topology (clustering, centrality, entropy)
+---
 
-- **Collective behavior**: Overall system coordination score## 📋 Table of Contents
+1. **START HERE**: `FRIEND_QUICK_START.md`
 
+   - Complete step-by-step instructions
 
+   - Setup, run, troubleshooting
 
-### Architecture1. [Overview](#overview)
+   - Read this first!## 🚀 Quick Start (3 Steps)
 
-2. [System Architecture](#system-architecture)
 
-```3. [Quick Start](#quick-start)
 
-┌─────────────────────────────────────────────────────────────┐4. [LLM Integration (Gemini & Ollama)](#llm-integration)
+2. **CHECKLIST**: `FRIEND_CHECKLIST.md`**TL;DR:** Monitor your Multi-Agent Systems, extract 16 performance features, train XGBoost to predict MAS quality, and optimize before expensive evaluation.## 🎯 Overview**A Python framework for monitoring, scoring, and optimizing Multi-Agent Systems (MAS) using LLM-based evaluation and XGBoost predictions.**
 
-│                    AgentMonitor Pipeline                     │5. [Components](#components)
+   - Print this out!
 
-├─────────────────────────────────────────────────────────────┤6. [Usage Guide](#usage-guide)
+   - Track 50+ runs### 1. Install
 
-│                                                               │7. [Fixes Applied](#fixes-applied)
-
-│  1. MAS Execution                                            │8. [Data Analysis](#data-analysis)
-
-│     ├─ Run multi-agent pipeline (code/QA tasks)             │9. [Troubleshooting](#troubleshooting)
-
-│     ├─ Monitor agent interactions                            │
-
-│     └─ Log execution traces                                  │---
-
-│                                                               │
-
-│  2. Feature Extraction                                       │## 🎯 Overview
-
-│     ├─ System Features (6): scores, loops, latency, tokens  │
-
-│     ├─ Graph Features (9): topology, centrality, entropy    │AgentMonitor is an intelligent monitoring system for Multi-Agent Systems that:
-
-│     └─ Collective Score (1): coordination measure           │
-
-│                                                               │- **Monitors**: Tracks agent outputs with 6-dimensional scoring (factual accuracy, clarity, safety, code correctness, complexity, personal score)
-
-│  3. Benchmark Evaluation (Training Data Generation)          │- **Enhances**: Automatically improves low-scoring outputs through iterative refinement
-
-│     ├─ HumanEval: Code generation tasks                     │- **Collects Features**: Extracts 19 system + graph metrics (latency, tokens, loops, graph centrality, PageRank entropy)
-
-│     ├─ GSM8K: Math reasoning tasks                          │- **Trains ML Models**: Uses XGBoost to predict collective system performance
-
-│     ├─ MMLU: Knowledge/QA tasks                             │- **Benchmarks**: Evaluates against HumanEval (code), GSM8K (math), MMLU (knowledge)
-
-│     └─ Weak Supervision: label = 0.5×HE + 0.3×GSM + 0.2×MM  │
-
-│                                                               │### Key Features
-
-│  4. XGBoost Training                                         │✅ **Dual LLM Support**: Switch between Google Gemini (cloud) and Ollama (local)  
-
-│     ├─ Input: 16 features (15 + collective_score)           │✅ **Automated Enhancement**: Iterative improvement loop with configurable threshold  
-
-│     ├─ Target: label_mas_score                              │✅ **Graph Analytics**: NetworkX-based pipeline topology analysis  
-
-│     └─ Output: Trained model (xgb_model.json)               │✅ **Benchmark Integration**: HumanEval (5,893 tasks), GSM8K (6,142 problems), MMLU  
-
-│                                                               │✅ **ML Predictions**: XGBoost regression for performance forecasting  
-
-│  5. Prediction                                               │
-
-│     ├─ New MAS → Extract features                           │---
-
-│     └─ Model → Predict performance                          │
-
-│                                                               │## 🏗️ System Architecture
-
-└─────────────────────────────────────────────────────────────┘
-
-```### Multi-Agent Pipelines
-
-
-
----**Code Generation Pipeline** (5 agents):
-
-```
-
-## 📁 Project StructureRequirementAnalyzer → CodeGenerator → CodeReviewer → UnitTestWriter → CodeExecutor
-
-```
-
-```
-
-AgentMonitor/Final/**QA Pipeline** (3 agents):
-
-│```
-
-├── Agent_Monitor/                    # Core monitoring systemRequirementAnalyzer → QAAnswerer → QAReviewer
-
-│   ├── agent_monitor.py              # MAS execution monitor```
-
-│   ├── run_with_monitor.py           # Main entry point for MAS execution
-
-│   ├── feature_aggregator.py         # Feature extraction from MAS runs### Monitoring Workflow
-
-│   ├── evaluate_mas_on_benchmarks.py # Benchmark evaluation for training data
-
-│   └── utils/```
-
-│       ├── eval_utils.py             # Answer evaluation utilitiesUser Prompt
-
-│       ├── graph_utils.py            # Graph metric computation    ↓
-
-│       └── json_logger.py            # JSON logging utilitiesAgent Pipeline (MAS)
-
-│    ↓
-
-├── MAS/                              # Multi-Agent System pipelinesAgentMonitor (6D Scoring)
-
-│   └── mas_pipeline.py               # Code & QA agent pipelines    ↓
-
-│Enhancement Loop (if score < threshold)
-
-├── Trainer/                          # Model training & prediction    ↓
-
-│   ├── xgb_trainer_mas.py            # XGBoost training scriptFeature Aggregator (19 metrics)
-
-│   └── predict_mas.py                # Prediction script    ↓
-
-│XGBoost Model (Prediction)
-
-├── BenchmarkDatasetFolder/           # Benchmark datasets    ↓
-
-│   ├── HumanEval/CSV Logging + JSON Export
-
-│   │   └── data.csv                  # Code generation tasks```
-
-│   ├── GSM8k/
-
-│   │   └── data.csv                  # Math reasoning tasks### Components Overview
-
-│   └── MMLU/
-
-│       └── data.csv                  # Knowledge/QA tasks| Component | File | Purpose |
-
-│|-----------|------|---------|
-
-├── data/                             # Generated data| **MAS Pipeline** | `MAS/mas_pipeline.py` | Multi-agent code/QA task execution |
-
-│   ├── mas_benchmark_results.csv     # Training dataset (5×20)| **Agent Monitor** | `Agent_Monitor/agent_monitor.py` | LLM-based scoring & enhancement |
-
-│   └── mas_benchmark_results_FORMAT_GUIDE.csv  # Example format| **Feature Aggregator** | `Agent_Monitor/feature_aggregator.py` | 19-metric feature engineering |
-
-│| **Run Orchestrator** | `Agent_Monitor/run_with_monitor.py` | Main pipeline coordinator |
-
-├── models/                           # Trained models| **Benchmark Runner** | `Agent_Monitor/benchmark_runner.py` | Dataset evaluation |
-
-│   └── xgb_model.json                # XGBoost model| **XGBoost Trainer** | `Trainer/xgb_trainer.py` | ML model training |
-
-│| **Predictor** | `Trainer/predict.py` | Performance prediction |
-
-├── logs/                             # Execution logs
-
-│---
-
-├── requirements.txt                  # Python dependencies
-
-├── README.md                         # This file## 🚀 Quick Start
-
-└── INSTRUCTIONS_FOR_FRIEND.md        # Dataset generation guide
-
-```### Prerequisites
-
-
-
----- Python 3.8+
-
-- Virtual environment (venv)
-
-## 🔧 Features Extracted (16 Total)- Gemini API key OR Ollama installed locally
-
-
-
-### System Features (6)### Installation
-
-| Feature | Description | Range |
-
-|---------|-------------|-------|```powershell
-
-| `avg_personal_score` | Average agent performance score | 0-1 |# 1. Clone repository
-
-| `min_personal_score` | Minimum agent performance score | 0-1 |git clone https://github.com/KumaraswamyBakkashetti/3-1project.git
-
-| `max_loops` | Maximum enhancement loops triggered | 0-10+ |cd Final
-
-| `total_latency` | Total execution time (seconds) | 0-∞ |
-
-| `total_token_usage` | Total tokens consumed | 0-∞ |# 2. Create virtual environment
-
-| `num_agents_triggered_enhancement` | Count of agents needing enhancement | 0-N |python -m venv venv
-
-.\venv\Scripts\Activate.ps1
-
-### Graph Features (9)
-
-| Feature | Description | Range |# 3. Install dependencies
-
-|---------|-------------|-------|pip install -r requirements.txt
-
-| `num_nodes` | Number of agent nodes | 3-10 |
-
-| `num_edges` | Number of interactions | 2-N |# 4. Configure environment
-
-| `clustering_coefficient` | Local clustering measure | 0-1 |# Create .env file with:
-
-| `transitivity` | Global clustering measure | 0-1 |LLM_PROVIDER=gemini  # or "ollama"
-
-| `avg_degree_centrality` | Average node connections | 0-1 |GEMINI_API_KEY=your_api_key_here
-
-| `avg_betweenness_centrality` | Average bridge importance | 0-1 |GEMINI_MODEL=gemini-2.0-flash
-
-| `avg_closeness_centrality` | Average node proximity | 0-1 |```
-
-| `pagerank_entropy` | Information distribution | 0-∞ |
-
-| `heterogeneity_score` | Network diversity | 0-∞ |### Basic Usage
-
-
-
-### Collective Score (1)```powershell
-
-| Feature | Description | Range |# Run single task
-
-|---------|-------------|-------|python Agent_Monitor/run_with_monitor.py
-
-| `collective_score` | Overall MAS coordination | 0-1 |# Enter: "write python code for fibonacci sequence"
-
-
-
-### Target Labels (4) - Only in Training Data# Run benchmarks (generate training data)
-
-| Label | Description | Formula |python Agent_Monitor/benchmark_runner.py
-
-|-------|-------------|---------|
-
-| `humaneval_score` | Code generation accuracy | Mean correctness |# Train XGBoost model
-
-| `gsm8k_score` | Math reasoning accuracy | Mean correctness |python Trainer/xgb_trainer.py
-
-| `mmlu_score` | Knowledge accuracy | Mean correctness |
-
-| `label_mas_score` | **Prediction Target** | 0.5×HE + 0.3×GSM + 0.2×MM |# Make predictions
-
-python Trainer/predict.py
-
----```
-
-
-
-## 🚀 Installation---
-
-
-
-### Prerequisites## 🦙 LLM Integration (Gemini & Ollama)
-
-- Python 3.8+
-
-- Virtual environment (recommended)### Current Status: Gemini (Cloud API)
-
-- LLM API (Gemini, OpenAI, or Ollama with Llama3)
-
-**Active Configuration**:
-
-### Setup- Provider: Google Gemini 2.0 Flash
-
-- API Key: Configured in `.env`
-
-```bash- Model: `gemini-2.0-flash`
-
-# Clone repository
-
-git clone <repository-url>### Switching to Ollama (Local)
-
-cd AgentMonitor/Final
-
-**Why Ollama?**
-
-# Create virtual environment- ✅ **Free**: No API costs
-
-python -m venv venv- ✅ **Private**: Data stays local
-
-- ✅ **Offline**: Works without internet
-
-# Activate virtual environment- ✅ **Fast**: Local inference on GPU/CPU
-
-# Windows:
-
-venv\Scripts\activate**Step-by-Step Integration**:
-
-# Linux/Mac:
-
-source venv/bin/activate#### 1. Create LLM Wrapper
-
-Create `Agent_Monitor/llm_wrapper.py`:
-
-# Install dependencies```python
-
-pip install -r requirements.txtimport os
-
-import ollama
-
-# Set up environment variablesimport google.generativeai as genai
-
-# Windows PowerShell:
-
-$env:GEMINI_API_KEY = "your-api-key-here"class OllamaClientWrapper:
-
-    def __init__(self, model_name="llama3"):
-
-# Linux/Mac:        self.model_name = model_name
-
-export GEMINI_API_KEY="your-api-key-here"    
-
-```    def generate_content(self, prompt: str) -> str:
-
-        response = ollama.generate(model=self.model_name, prompt=prompt)
-
----        return response['response']
-
-
-
-## 💡 Usageclass GeminiClientWrapper:
-
-    def __init__(self, api_key: str, model_name="gemini-2.0-flash"):
-
-### 1. Generate Training Dataset        genai.configure(api_key=api_key)
-
-        self.model_name = model_name
-
-```bash    
-
-python Agent_Monitor/evaluate_mas_on_benchmarks.py    def generate_content(self, prompt: str) -> str:
-
-```        model = genai.GenerativeModel(self.model_name)
-
-        return model.generate_content(prompt).text
-
-**Output**: `data/mas_benchmark_results.csv` (5 rows × 20 columns)
-
-def create_llm_client(provider=None, **kwargs):
-
-- Tests 5 MAS variants on 3 benchmarks    provider = provider or os.getenv("LLM_PROVIDER", "ollama")
-
-- Each MAS runs 30 times (10 samples × 3 benchmarks)    if provider == "ollama":
-
-- Features aggregated across all runs        return OllamaClientWrapper(kwargs.get("model_name", "llama3"))
-
-- Takes ~30-45 minutes for 10 samples    elif provider == "gemini":
-
-        return GeminiClientWrapper(kwargs.get("api_key"), kwargs.get("model_name"))
-
-### 2. Train XGBoost Model```
-
-
-
-```bash#### 2. Update agent_monitor.py
-
-python Trainer/xgb_trainer_mas.py```python
-
-```# Replace imports
-
-from Agent_Monitor.llm_wrapper import create_llm_client
-
-**Output**: `models/xgb_model.json`
-
-# Update __init__
-
-- Loads training data from `data/mas_benchmark_results.csv`def __init__(self, llm_client=None, threshold=0.6, ...):
-
-- Uses 16 features (15 + collective_score) as X    self.client = llm_client
-
-- Uses `label_mas_score` as y```
-
-- Saves trained model
-
-#### 3. Update run_with_monitor.py
-
-### 3. Make Predictions```python
-
-from Agent_Monitor.llm_wrapper import create_llm_client
+   - Simple progress tracker
 
 ```bash
 
-python Trainer/predict_mas.pydef run_prompt(..., llm_provider=None):
+### 🎓 **For You** (Model Training & Usage)
 
-```    llm_client = create_llm_client(provider=llm_provider)
+pip install -r requirements.txt
 
-    monitor = AgentMonitor(llm_client=llm_client, ...)
+1. **MAIN GUIDE**: `COMPLETE_GUIDE.md`
 
-**Input**: New MAS features (16 values)  ```
+   - Complete technical documentation```---
 
-**Output**: Predicted MAS performance score (0-1)
+   - All features, workflows, code explanations
 
-#### 4. Update .env
+   - Reference for everything
 
----```env
 
-LLM_PROVIDER=ollama
 
-## 📊 Training Data FormatOLLAMA_MODEL=llama3
+---### 2. Set API Key
 
-OLLAMA_HOST=http://localhost:11434
 
-### CSV Structure (20 columns)```
 
+## ⚡ Quick Commands```bash
 
 
-```csv#### 5. Install & Setup
 
-avg_personal_score,min_personal_score,max_loops,total_latency,total_token_usage,num_agents_triggered_enhancement,num_nodes,num_edges,clustering_coefficient,transitivity,avg_degree_centrality,avg_betweenness_centrality,avg_closeness_centrality,pagerank_entropy,heterogeneity_score,collective_score,humaneval_score,gsm8k_score,mmlu_score,label_mas_score```powershell
+### Your Friend Does (50+ times):echo GEMINI_API_KEY=your_key_here > .env## 📋 Table of Contents**AgentMonitor** is a machine learning system that predicts Multi-Agent System (MAS) performance using XGBoost regression. It monitors MAS execution, extracts behavioral features, and predicts overall system effectiveness based on agent interactions and collective behavior.**Status**: ✅ **FULLY FUNCTIONAL**  
 
-0.63,0.40,2,25.48,1384,3,5,4,0.18,0.22,0.36,0.14,0.27,2.16,0.008,0.65,0.72,0.58,0.61,0.63# Install Ollama Python package
+```bash
 
-0.71,0.52,3,32.15,1876,5,6,5,0.22,0.28,0.42,0.18,0.31,2.45,0.011,0.73,0.78,0.65,0.68,0.72pip install ollama
-
-...
-
-```# Pull Llama model
-
-ollama pull llama3
-
-**Breakdown**:
-
-- Columns 1-6: System features# Test
-
-- Columns 7-15: Graph featuresollama run llama3 "Hello"
-
-- Column 16: Collective score```
-
-- Columns 17-19: Benchmark scores (training only)
-
-- Column 20: Label (training target)#### 6. Run with Ollama
-
-```powershell
-
----python Agent_Monitor/run_with_monitor.py
-
-# Output: [INFO] Using Ollama with model: llama3
-
-## 🧪 MAS Variants Tested```
-
-
-
-The system evaluates 5 different MAS configurations:**Performance Comparison**:
-
-
-
-| Variant | Threshold | Max Retries | Description || Metric | Gemini | Ollama (Llama3) |
-
-|---------|-----------|-------------|-------------||--------|--------|----------------|
-
-| CodeMAS_v1 | 0.6 | 2 | Balanced configuration || Cost | $0.0005/1K tokens | Free |
-
-| CodeMAS_Aggressive | 0.5 | 3 | More enhancement loops || Latency | ~2-5s | ~3-10s (CPU), ~1-3s (GPU) |
-
-| CodeMAS_Conservative | 0.7 | 1 | Fewer enhancement loops || Privacy | Cloud | Local |
-
-| LogicMAS_v1 | 0.6 | 2 | Logic-focused tasks || Quality | Excellent | Good |
-
-| QA_MAS_v1 | 0.6 | 2 | Question-answering tasks |
-
----
-
----
-
-## 📦 Components
-
-## 🔬 How It Works
-
-### 1. MAS Pipeline (`MAS/mas_pipeline.py`)
-
-### Step 1: MAS Execution with Monitoring
-
-**Code Pipeline**:
-
-```python- `RequirementAnalyzer`: Extracts requirements, identifies language
-
-from Agent_Monitor.run_with_monitor import run_prompt- `CodeGenerator`: Generates working code with LLM
-
-- `CodeReviewer`: Detects bugs and inefficiencies
-
-data, features, raw_log, summary = run_prompt(- `UnitTestWriter`: Creates test cases
-
-    prompt="Write a function to reverse a string",- `CodeExecutor`: Runs syntax checks and simulates execution
-
-    task_type='code',
-
-    api_key=os.getenv('GEMINI_API_KEY'),**QA Pipeline**:
-
-    threshold=0.6,- `RequirementAnalyzer`: Analyzes question
-
-    max_retries=2- `QAAnswerer`: Generates answer
-
-)- `QAReviewer`: Reviews answer quality
-
-
-
-# features contains 16 metrics### 2. Agent Monitor (`Agent_Monitor/agent_monitor.py`)
-
-print(features)
-
-# {**6-Dimensional Scoring**:
-
-#   'avg_personal_score': 0.75,1. **personal_score**: Overall quality (0-1)
-
-#   'min_personal_score': 0.60,2. **factual_accuracy**: Correctness (0-1)
-
-#   'max_loops': 2,3. **clarity**: Readability (0-1)
-
-#   ...4. **safety**: Security/ethics (0-1)
-
-#   'collective_score': 0.825. **code_correctness**: Syntax/logic (0-1, code only)
-
-# }6. **complexity**: Appropriate complexity (0-1)
+python main.py generate```
 
 ```
 
-**Enhancement Loop**:
 
-### Step 2: Feature Aggregation```python
 
-while score < threshold and loops < max_retries:
+### You Do (ONCE after getting data):
 
-For each MAS variant:    enhanced_output = llm.enhance(current_output, suggestions)
+```bash### 3. Run Complete Demo
 
-1. Run on 10 HumanEval tasks → collect 10 feature sets    score = llm.score(enhanced_output)
+python main.py train
 
-2. Run on 10 GSM8K tasks → collect 10 feature sets    loops += 1
-
-3. Run on 10 MMLU tasks → collect 10 feature sets```
-
-4. **Aggregate**: Average each of 15 features across all 30 runs
-
-5. Compute benchmark scores (accuracy on each benchmark)### 3. Feature Aggregator (`Agent_Monitor/feature_aggregator.py`)
-
-6. Compute label: `0.5 × humaneval + 0.3 × gsm8k + 0.2 × mmlu`
-
-**19 Features Collected**:
-
-### Step 3: XGBoost Training
-
-**System Metrics** (8):
-
-```python- `avg_personal_score`, `max_personal_score`, `min_personal_score`
-
-# X: 16 features (15 + collective_score)- `total_latency_sec`, `avg_token_count`
-
-# y: label_mas_score- `max_loops`, `avg_loops`
-
-- `collective_score` (LLM-based system-level score)
-
-model = xgb.XGBRegressor(
-
-    n_estimators=100,**Graph Metrics** (11):
-
-    max_depth=5,- `num_nodes`, `num_edges`, `avg_degree`
-
-    learning_rate=0.1- `clustering_coefficient`, `transitivity`
-
-)- `avg_betweenness_centrality`, `avg_closeness_centrality`
-
-model.fit(X, y)- `pagerank_entropy`, `authority_entropy`
-
-```- `density`, `diameter`
+``````bash- [Quick Start](#-quick-start)**Date**: October 8, 2025  
 
 
 
-### Step 4: Prediction**Benchmark Scores** (3):
+### You Do (FOREVER after training):python run_complete_agentmonitor.py
 
-- `humaneval_score` (code correctness)
+```bash
 
-```python- `gsm8k_score` (math reasoning)
+python main.py predict```- [What This Does](#-what-this-does)
 
-# New MAS execution- `mmlu_score` (knowledge)
+```
 
-new_features = [0.68, 0.45, 2, 27.5, 1500, 3, 5, 4, 0.20, ...]  # 16 values
 
-### 4. XGBoost Model (`Trainer/xgb_trainer.py`)
 
-# Predict performance
+---
 
-predicted_score = model.predict([new_features])**Model Configuration**:
+**This runs the COMPLETE system:**- [Installation](#-installation)### Key Innovation**Author**: Kumaraswamy Bakkashetti
 
-print(f"Predicted MAS Score: {predicted_score[0]:.4f}")```python
+## 📁 Project Structure
 
-```XGBRegressor(
+- ✅ 4-agent MAS pipeline (Analyzer → Coder → Tester → Reviewer)
 
-    n_estimators=100,
+```
 
----    max_depth=5,
+Final/- ✅ **Enhancement loops** (auto-retry if quality < threshold)- [Basic Usage](#-basic-usage)
 
-    learning_rate=0.1,
+├── 📘 COMPLETE_GUIDE.md          # Your complete documentation
 
-## 📈 Expected Performance    objective='reg:squarederror'
+├── 👋 FRIEND_QUICK_START.md      # Friend's instructions- ✅ Extract **16 features** (system + graph + collective)
+
+├── ✅ FRIEND_CHECKLIST.md         # Friend's tracking sheet
+
+├── 📄 README.md                   # This file- ✅ Show XGBoost training/prediction- [Project Structure](#-project-structure)Instead of evaluating MAS on expensive benchmark tasks, AgentMonitor predicts performance by analyzing:
+
+│
+
+├── 🐍 main.py                     # Main script (3 modes)
+
+├── ⚙️ requirements.txt            # Dependencies
+
+├── 🔑 .env                        # API key (CHANGE THIS!)---- [Complete Workflow](#-complete-workflow)
+
+│
+
+├── 📁 AgentMonitor/               # Framework (19 Python files)
+
+│   ├── core/                     # Monitoring
+
+│   ├── features/                 # Feature extraction## 💡 What Makes This Complete?- [API Reference](#-api-reference)- **System metrics**: Agent scores, enhancement loops, latency, token usage---
+
+│   ├── evaluation/               # Benchmarks
+
+│   ├── models/                   # Predictor code
+
+│   ├── mas/                      # MAS implementations
+
+│   └── utils/### ✅ Research Paper Features- [Important Notes](#-important-notes)
+
+│
+
+├── 📁 models/                     # Trained models (empty until you train)- **16 Performance Indicators** (6 system + 9 graph + 1 collective)
+
+│   └── (mas_predictor.pkl after training)
+
+│- **Weak Supervision** (0.5×HumanEval + 0.3×GSM8K + 0.2×MMLU)- [Citation](#-citation)- **Graph features**: Interaction network topology (clustering, centrality, entropy)
+
+├── 📁 data/                       # Training data
+
+│   └── training_data.csv        # Generated by friend- **XGBoost Regression** with hyperparameter tuning
+
+│
+
+└── 📁 BenchmarkDatasetFolder/     # Benchmark datasets- **Spearman Correlation** as primary metric
+
+    ├── HumanEval/
+
+    ├── GSM8K/- **Non-invasive Monitoring** (no code changes needed)
+
+    └── MMLU/
+
+```---- **Collective behavior**: Overall system coordination score## 📋 Table of Contents
+
+
+
+---### ✅ Production Features (NEW!)
+
+
+
+## 🚀 The Complete Workflow- **Enhancement Loops** - Auto-retry if agent output quality < threshold
+
+
+
+### Phase 1: Your Friend Generates Data- **LLM-based Scoring** - Quality assessment for each agent output
+
+```
+
+Friend receives:- **Feedback Generation** - Actionable suggestions for improvement## 🚀 Quick Start
+
+  ↓
+
+Sets up environment (5 min)- **Conversation Graph** - Track agent interactions automatically
+
+  ↓
+
+Runs: python main.py generate (50+ times, ~1 hour each)- **Comprehensive Logging** - JSON output with full statistics
+
+  ↓
+
+Sends you: data/training_data.csv
+
+```
+
+---### 1. Install Dependencies### Architecture1. [Overview](#overview)
+
+### Phase 2: You Train Model (ONCE)
+
+```
+
+You receive: data/training_data.csv
+
+  ↓## 📖 Complete Usage Example
+
+Run: python main.py train (5 minutes)
+
+  ↓
+
+Creates: models/mas_predictor.pkl ✅
+
+``````python```bash2. [System Architecture](#system-architecture)
+
+
+
+### Phase 3: You Predict (FOREVER)from AgentMonitor.core.enhanced_monitor import EnhancedAgentMonitor
+
+```
+
+Run: python main.py predict (8 seconds)pip install -r requirements.txt
+
+  ↓
+
+Loads: models/mas_predictor.pkl ✅# Create monitor with enhancement loops
+
+  ↓
+
+Output: Predicted MAS Scoremonitor = EnhancedAgentMonitor(``````3. [Quick Start](#quick-start)
+
+```
+
+    api_key="your_key",
+
+**Key**: Train ONCE, predict FOREVER! No retraining needed!
+
+    threshold=0.6,    # Retry if score < 0.6
+
+---
+
+    max_retries=2,    # Max 2 enhancement attempts
+
+## 🎁 What to Give Your Friend
+
+    debug=True### 2. Set API Key┌─────────────────────────────────────────────────────────────┐4. [LLM Integration (Gemini & Ollama)](#llm-integration)
+
+### Required Files:
+
+```)
+
+✅ Final/ folder (entire thing)
+
+✅ Tell them to read: FRIEND_QUICK_START.md
+
+✅ Tell them to print: FRIEND_CHECKLIST.md
+
+✅ Tell them to change API key in .env# Run agent with automatic enhancement
+
+```
+
+result = await monitor.run_agent_with_enhancement(Create `.env` file:│                    AgentMonitor Pipeline                     │5. [Components](#components)
+
+### Do NOT share:
+
+```    agent=my_coder_agent,
+
+❌ venv/ folder (they create their own)
+
+❌ Your API key    task="Write a function to calculate Fibonacci sequence",```bash
+
+```
+
+    agent_name="Coder",
+
+---
+
+    capability="gemini"GEMINI_API_KEY=your_gemini_api_key_here├─────────────────────────────────────────────────────────────┤6. [Usage Guide](#usage-guide)
+
+## 🔧 Installation (Quick)
 
 )
 
+```bash
+
+# 1. Create virtual environment```
+
+python -m venv venv
+
+print(f"Output: {result['output']}")
+
+# 2. Activate it
+
+venv\Scripts\activate          # Windowsprint(f"Score: {result['score']:.2f}")│                                                               │7. [Fixes Applied](#fixes-applied)
+
+source venv/bin/activate       # Mac/Linux
+
+print(f"Attempts: {result['attempts']}")
+
+# 3. Install dependencies
+
+pip install -r requirements.txtprint(f"Enhanced: {result['enhanced']}")### 3. Run Demo
+
+
+
+# 4. Set API key in .env
+
+echo GEMINI_API_KEY=your_key > .env
+
+# Save monitoring data│  1. MAS Execution                                            │8. [Data Analysis](#data-analysis)
+
+# 5. Ready!
+
+```monitor.save("output.json")
+
+
+
+---```bash
+
+
+
+## 📊 Two "models" Folders Explained# Print summary statistics
+
+
+
+People get confused by this - here's why both exist:monitor.print_summary()python examples/complete_demo.py│     ├─ Run multi-agent pipeline (code/QA tasks)             │9. [Troubleshooting](#troubleshooting)
+
+
+
+1. **`Final/models/`** (folder, empty initially)```
+
+   - Stores **saved trained models** (`.pkl` files)
+
+   - Created after running `python main.py train````
+
+   - This is where `mas_predictor.pkl` lives
+
+**Output:**
+
+2. **`AgentMonitor/models/`** (Python package)
+
+   - Contains **source code** (`predictor.py`)```│     ├─ Monitor agent interactions                            │
+
+   - The actual training/prediction logic
+
+   - Part of the framework[Coder] ⚠️ Score 0.52 < 0.60 - Retry 1/2
+
+
+
+**Think of it**:[Coder] ✅ Score 0.78 >= 0.60 (attempt 1)---
+
+- `models/` = Library (where books are stored)
+
+- `AgentMonitor/models/` = Printing press (where books are made)
+
+
+
+**Both are needed!** Not duplicates!Output: def fibonacci(n):...│     └─ Log execution traces                                  │---
+
+
+
+---Score: 0.78
+
+
+
+## ✅ VerificationAttempts: 1## 💡 What This Does
+
+
+
+### Is Everything Working?Enhanced: True
+
+
+
+```bash```│                                                               │
+
+# Test imports
+
+python -c "from AgentMonitor import EnhancedAgentMonitor; print('✅')"
+
+
+
+# Check structure---### Problem
+
+python -c "import os; print('✅' if os.path.exists('AgentMonitor/models/predictor.py') else '❌')"
+
+
+
+# Verify dependencies
+
+pip list | findstr "pandas xgboost"  # Windows## 🏗️ Project StructureEvaluating Multi-Agent Systems (MAS) on benchmarks like HumanEval, GSM8K, MMLU is **expensive** and **time-consuming**. You need to predict which MAS configurations will perform well **before** running full evaluations.│  2. Feature Extraction                                       │## 🎯 Overview
+
+pip list | grep "pandas\|xgboost"   # Mac/Linux
+
+```
+
+
+
+All show ✅? You're good!```
+
+
+
+---AgentMonitor/Final/
+
+
+
+## 🐛 Common Issues├── run_complete_agentmonitor.py   ⭐ Main demo (start here!)### Solution│     ├─ System Features (6): scores, loops, latency, tokens  │
+
+
+
+### "Module not found"│
+
+```bash
+
+# Activate venv first!├── AgentMonitor/                   📦 Framework package**AgentMonitor** provides:
+
+venv\Scripts\activate
+
+pip install -r requirements.txt│   ├── core/
+
+```
+
+│   │   ├── agent_monitor.py        - Basic monitoring│     ├─ Graph Features (9): topology, centrality, entropy    │AgentMonitor is an intelligent monitoring system for Multi-Agent Systems that:
+
+### "No API key"
+
+```bash│   │   ├── enhanced_monitor.py     - With enhancement loops ⭐
+
+# Edit .env file
+
+# Add: GEMINI_API_KEY=your_actual_key│   │   └── agent_wrapper.py        - Simple agent wrapper1. **Non-invasive Monitoring** - Wrap your MAS without changing code
+
+```
+
+│   ├── features/
+
+### "Model not trained"
+
+```bash│   │   └── feature_extractor.py    - 16 feature extraction2. **16 Performance Features** - Extract system, graph, and collaboration metrics│     └─ Collective Score (1): coordination measure           │
+
+# You need to train first!
+
+python main.py train│   ├── evaluation/
+
+```
+
+│   │   ├── benchmark_evaluator.py  - HumanEval/GSM8K/MMLU3. **Benchmark Evaluation** - Robust HumanEval/GSM8K/MMLU scoring
+
+### "No training data"
+
+```bash│   │   └── mas_orchestrator.py     - Full evaluation pipeline
+
+# Your friend needs to generate data first!
+
+# Or run: python main.py generate│   ├── models/4. **XGBoost Prediction** - Train model to predict MAS performance│                                                               │- **Monitors**: Tracks agent outputs with 6-dimensional scoring (factual accuracy, clarity, safety, code correctness, complexity, personal score)
+
+```
+
+│   │   └── predictor.py            - XGBoost training/prediction
+
+---
+
+│   └── utils/5. **Variant Optimization** - Test many configurations, deploy only the best
+
+## 📈 Expected Results
+
+│
+
+### After Friend's Work (50+ runs):
+
+- ✅ `data/training_data.csv` exists├── MAS/│  3. Benchmark Evaluation (Training Data Generation)          │- **Enhances**: Automatically improves low-scoring outputs through iterative refinement
+
+- ✅ Has 50+ rows (samples)
+
+- ✅ Has 20 columns (16 features + 4 scores)│   └── mas_pipeline.py             - Example MAS implementations
+
+
+
+### After Your Training (once):│### Research Paper Results
+
+- ✅ `models/mas_predictor.pkl` exists
+
+- ✅ Terminal shows: "Model saved to models/mas_predictor.pkl"├── scripts/
+
+- ✅ Spearman correlation > 0.8 (with enough data)
+
+│   └── generate_mas_variants.py    - Generate 30-50 MAS configs- **Spearman Correlation:** 0.89 (in-domain), 0.58 (cross-task)│     ├─ HumanEval: Code generation tasks                     │- **Collects Features**: Extracts 19 system + graph metrics (latency, tokens, loops, graph centrality, PageRank entropy)
+
+### After Your Prediction (forever):
+
+- ✅ Terminal shows: "Model loaded from models/mas_predictor.pkl"│
+
+- ✅ Takes ~8 seconds (vs hours of benchmark evaluation!)
+
+- ✅ Outputs predicted MAS score├── BenchmarkDatasetFolder/         - Benchmark datasets- **Training Data:** 1,796 MAS variants
+
+
+
+---│   ├── HumanEval/data.csv
+
+
+
+## 🎓 Paper Information│   ├── GSM8k/data.csv- **Benchmarks:** HumanEval (164 samples), GSM8K (100), MMLU (100)│     ├─ GSM8K: Math reasoning tasks                          │- **Trains ML Models**: Uses XGBoost to predict collective system performance
+
+
+
+**Research Paper**: AgentMonitor - Non-invasive MAS Performance Prediction  │   └── MMLU/data.csv
+
+**arXiv**: 2408.14972  
+
+**Key Innovation**: Predict MAS performance from behavioral features (fast!) instead of benchmark evaluation (slow!)│
+
+
+
+**16 Features Extracted**:├── data/                           - Generated data
+
+- 6 System metrics (latency, tokens, scores)
+
+- 9 Graph metrics (centrality, clustering)└── models/                         - Trained models---│     ├─ MMLU: Knowledge/QA tasks                             │- **Benchmarks**: Evaluates against HumanEval (code), GSM8K (math), MMLU (knowledge)
+
+- 1 Collective metric (final output quality)
+
+```
+
+**Prediction Model**: XGBoost Regressor  
+
+**Target**: Combined benchmark score (0.5×HumanEval + 0.3×GSM8K + 0.2×MMLU)
+
+
+
+------
+
+
+
+## 📞 Support## 📦 Installation│     └─ Weak Supervision: label = 0.5×HE + 0.3×GSM + 0.2×MM  │
+
+
+
+**For Your Friend**:## 🔄 Complete Workflow
+
+- Read: `FRIEND_QUICK_START.md`
+
+- Print: `FRIEND_CHECKLIST.md`
+
+- Contact you if stuck
+
+### Phase 1: Monitor with Enhancement Loops
+
+**For You**:
+
+- Read: `COMPLETE_GUIDE.md`### Requirements│                                                               │### Key Features
+
+- Check: GitHub issues
+
+- File bug reports```python
+
+
+
+---# Your agents automatically improve via enhancement loops- Python 3.9+
+
+
+
+## 🏆 Summarymonitor = EnhancedAgentMonitor(api_key="key", threshold=0.6, max_retries=2)
+
+
+
+### Your Friend's Job:- Google Gemini API key (or OpenAI/Anthropic)│  4. XGBoost Training                                         │✅ **Dual LLM Support**: Switch between Google Gemini (cloud) and Ollama (local)  
+
+```bash
+
+python main.py generate  # 50+ times# Run MAS pipeline
+
+# Send: data/training_data.csv
+
+```results = await mas.run(task, monitor)
+
+
+
+### Your Job (After Getting CSV):
+
+```bash
+
+python main.py train     # Once# Graph edges tracked automatically### Install│     ├─ Input: 16 features (15 + collective_score)           │✅ **Automated Enhancement**: Iterative improvement loop with configurable threshold  
+
+python main.py predict   # Forever
+
+```monitor.record_graph_edge("Analyzer", "Coder")
+
+
+
+### Result:monitor.record_graph_edge("Coder", "Tester")
+
+- ✅ Predict MAS performance in seconds (vs hours)
+
+- ✅ No retraining needed
+
+- ✅ Production-ready ML system
+
+# Save monitoring data```bash│     ├─ Target: label_mas_score                              │✅ **Graph Analytics**: NetworkX-based pipeline topology analysis  
+
+---
+
+monitor.save("output.json")
+
+## 🎯 Next Steps
+
+```# Clone repository
+
+1. **Give folder to friend** → They read `FRIEND_QUICK_START.md`
+
+2. **Friend generates 50+ samples** → Sends you CSV
+
+3. **You train model once** → Saves to `models/mas_predictor.pkl`
+
+4. **You predict forever** → Fast performance estimates!**Key Feature:** If an agent's output scores < 0.6, it automatically:cd AgentMonitor/Final│     └─ Output: Trained model (xgb_model.json)               │✅ **Benchmark Integration**: HumanEval (5,893 tasks), GSM8K (6,142 problems), MMLU  
+
+
+
+**That's it!** Simple, clean, production-ready! 🚀1. Gets scored by LLM (0-1 scale)
+
+
+
+---2. Receives feedback on how to improve
+
+
+
+**Questions?** Read `COMPLETE_GUIDE.md` for full details.3. Retries with enhanced prompt
+
+
+
+**Ready to start?** Give the `Final/` folder to your friend now!4. Up to max_retries times# Create virtual environment│                                                               │✅ **ML Predictions**: XGBoost regression for performance forecasting  
+
+
+
+✨ **Good luck with your research!** ✨
+
+
+---python -m venv venv
+
+
+
+### Phase 2: Extract 16 Featuresvenv\Scripts\activate  # Windows│  5. Prediction                                               │
+
+
+
+```python# source venv/bin/activate  # Linux/Mac
+
+from AgentMonitor.features.feature_extractor import FeatureExtractor
+
+│     ├─ New MAS → Extract features                           │---
+
+monitor.load("output.json")
+
+extractor = FeatureExtractor(api_key="key")# Install dependencies
+
+features = await extractor.extract_all_features(monitor.monitor_data)
+
+pip install -r requirements.txt│     └─ Model → Predict performance                          │
+
+# Returns 16 features:
+
+{
+
+    # System Metrics (6)
+
+    'avg_personal_score': 0.82,# Set up API key│                                                               │## 🏗️ System Architecture
+
+    'min_personal_score': 0.75,
+
+    'max_loops': 2,echo GEMINI_API_KEY=your_key > .env
+
+    'total_latency': 4.5,
+
+    'total_token_usage': 1500,```└─────────────────────────────────────────────────────────────┘
+
+    'num_agents_triggered_enhancement': 1,
+
+    
+
+    # Graph Metrics (9)
+
+    'num_nodes': 4,### Dependencies```### Multi-Agent Pipelines
+
+    'num_edges': 3,
+
+    'avg_clustering': 0.0,- `pandas>=2.0.0` - Data processing
+
+    'global_transitivity': 0.0,
+
+    'avg_degree_centrality': 0.5,- `numpy>=1.24.0` - Numerical computing
+
+    'avg_betweenness_centrality': 0.33,
+
+    'avg_closeness_centrality': 0.67,- `networkx>=3.1` - Graph analysis (9 graph features)
+
+    'pagerank_entropy': 1.38,
+
+    'heterogeneity_score': 0.25,- `xgboost>=2.0.0` - Prediction model---**Code Generation Pipeline** (5 agents):
+
+    
+
+    # Collective Metric (1)- `scikit-learn>=1.3.0` - ML utilities
+
+    'collective_score': 0.80
+
+}- `google-generativeai>=0.3.0` - LLM integration```
+
+```
+
+
+
+---
+
+---## 📁 Project StructureRequirementAnalyzer → CodeGenerator → CodeReviewer → UnitTestWriter → CodeExecutor
+
+### Phase 3: Generate Training Data
+
+
+
+```bash
+
+# Generate 30-50 MAS variants## 🎯 Basic Usage```
+
+python scripts/generate_mas_variants.py
+
+
+
+# Evaluate each variant on benchmarks
+
+# (You implement this based on your benchmarks)### Step 1: Monitor Your MAS```
+
+
+
+# Result: data/mas_benchmark_results.csv
+
+# Format: [16 features] + [3 benchmark scores] + [1 label]
+
+``````pythonAgentMonitor/Final/**QA Pipeline** (3 agents):
+
+
+
+**Important:** You need **30-50 variants minimum** for meaningful XGBoost training!from AgentMonitor import AgentMonitor, AgentWrapper
+
+
+
+| Variants | Spearman | Quality |│```
+
+|----------|----------|---------|
+
+| 2 | 0.0-0.2 | ❌ Useless |# Create monitor
+
+| 30-50 | 0.4-0.6 | ✅ Basic |
+
+| 100+ | 0.6-0.7 | ✅ Good |monitor = AgentMonitor(debug=True)├── Agent_Monitor/                    # Core monitoring systemRequirementAnalyzer → QAAnswerer → QAReviewer
+
+| 1,796 (paper) | 0.89 | 🎯 Excellent |
+
+
+
+---
+
+# Create agents│   ├── agent_monitor.py              # MAS execution monitor```
+
+### Phase 4: Train XGBoost Predictor
+
+agent1 = AgentWrapper(name="Coder", capability="coding", model="gemini-flash")
+
+```python
+
+from AgentMonitor.models.predictor import MASPredictoragent2 = AgentWrapper(name="Reviewer", capability="review", model="gemini-flash")│   ├── run_with_monitor.py           # Main entry point for MAS execution
+
+
+
+predictor = MASPredictor(model_path="models/mas_predictor.pkl")
+
+metrics = predictor.train(
+
+    data_path="data/mas_benchmark_results.csv",# Register agents (non-invasive wrapper)│   ├── feature_aggregator.py         # Feature extraction from MAS runs### Monitoring Workflow
+
+    test_size=0.2,
+
+    tune_hyperparams=Trueawait monitor.register(agent1, agent1.input, agent1.output, capability="coding")
+
+)
+
+await monitor.register(agent2, agent2.input, agent2.output, capability="review")│   ├── evaluate_mas_on_benchmarks.py # Benchmark evaluation for training data
+
+print(f"Spearman: {metrics['test_spearman']:.4f}")
+
+print(f"R²: {metrics['test_r2']:.4f}")
+
+
+
+# Save trained model# Run your MAS│   └── utils/```
+
+predictor.save("models/mas_predictor.pkl")
+
+```task = "Write a function to calculate factorial"
+
+
+
+---result1 = await agent1.run(task)│       ├── eval_utils.py             # Answer evaluation utilitiesUser Prompt
+
+
+
+### Phase 5: Predict New MAS Performanceresult2 = await agent2.run(result1)
+
+
+
+```python│       ├── graph_utils.py            # Graph metric computation    ↓
+
+# Load trained model
+
+predictor.load("models/mas_predictor.pkl")# Save monitoring data
+
+
+
+# Extract features from new MASmonitor.save("output.json")│       └── json_logger.py            # JSON logging utilitiesAgent Pipeline (MAS)
+
+new_features = {...}  # 16 features
+
+```
+
+# Predict (fast!)
+
+predicted_score = predictor.predict(new_features)│    ↓
+
+
+
+if predicted_score > 0.7:### Step 2: Extract Features
+
+    print("✅ Deploy this MAS!")
+
+else:├── MAS/                              # Multi-Agent System pipelinesAgentMonitor (6D Scoring)
+
+    print("❌ Reject - predicted performance too low")
+
+``````python
+
+
+
+---from AgentMonitor import FeatureExtractor│   └── mas_pipeline.py               # Code & QA agent pipelines    ↓
+
+
+
+## 🎯 Key Features Explained
+
+
+
+### 1. Enhancement Loops ⭐ NEW!# Load monitoring data│Enhancement Loop (if score < threshold)
+
+
+
+**Problem:** Agents sometimes produce low-quality outputs  monitor.load("output.json")
+
+**Solution:** Automatically retry with feedback
+
+├── Trainer/                          # Model training & prediction    ↓
+
+```python
+
+# Configuration# Extract 16 features
+
+threshold = 0.6   # Quality threshold
+
+max_retries = 2   # Max retry attemptsextractor = FeatureExtractor(api_key="your_api_key")│   ├── xgb_trainer_mas.py            # XGBoost training scriptFeature Aggregator (19 metrics)
+
+
+
+# Automatic process:features = await extractor.extract_all_features(monitor.monitor_data)
+
+# 1. Agent generates output
+
+# 2. LLM scores quality (0-1)│   └── predict_mas.py                # Prediction script    ↓
+
+# 3. If score < threshold:
+
+#    - Generate improvement feedbackprint(features)
+
+#    - Retry with enhanced prompt
+
+#    - Repeat up to max_retries# {│XGBoost Model (Prediction)
+
+# 4. Accept best output
+
+```#   'avg_personal_score': 0.85,      # System metrics (6)
+
+
+
+**Benefits:**#   'min_personal_score': 0.75,├── BenchmarkDatasetFolder/           # Benchmark datasets    ↓
+
+- ✅ Improves output quality automatically
+
+- ✅ No manual intervention needed#   'max_loops': 2,
+
+- ✅ Tracks enhancement statistics
+
+- ✅ Works with any agent#   'total_latency': 5.3,│   ├── HumanEval/CSV Logging + JSON Export
+
+
+
+---#   'total_token_usage': 1200,
+
+
+
+### 2. 16 Performance Features#   'num_agents_triggered_enhancement': 1,│   │   └── data.csv                  # Code generation tasks```
+
+
+
+Following the research paper exactly:#   'num_nodes': 2,                   # Graph metrics (9)
+
+
+
+**System Metrics (6):**#   'num_edges': 1,│   ├── GSM8k/
+
+1. `avg_personal_score` - Average LLM-judged agent quality
+
+2. `min_personal_score` - Minimum agent quality (bottleneck)#   'avg_clustering': 0.0,
+
+3. `max_loops` - Maximum enhancement loops used
+
+4. `total_latency` - Total execution time#   'global_transitivity': 0.0,│   │   └── data.csv                  # Math reasoning tasks### Components Overview
+
+5. `total_token_usage` - Total LLM tokens used
+
+6. `num_agents_triggered_enhancement` - Agents needing retry#   'avg_degree_centrality': 0.5,
+
+
+
+**Graph Metrics (9):**#   'avg_betweenness_centrality': 0.0,│   └── MMLU/
+
+7. `num_nodes` - Number of agents
+
+8. `num_edges` - Number of interactions#   'avg_closeness_centrality': 1.0,
+
+9. `avg_clustering` - Clustering coefficient
+
+10. `global_transitivity` - Graph transitivity#   'pagerank_entropy': 0.69,│       └── data.csv                  # Knowledge/QA tasks| Component | File | Purpose |
+
+11. `avg_degree_centrality` - Average degree centrality
+
+12. `avg_betweenness_centrality` - Average betweenness#   'heterogeneity_score': 0.0,
+
+13. `avg_closeness_centrality` - Average closeness
+
+14. `pagerank_entropy` - PageRank entropy#   'collective_score': 0.80          # Collective metric (1)│|-----------|------|---------|
+
+15. `heterogeneity_score` - Agent capability diversity
+
+# }
+
+**Collective Metric (1):**
+
+16. `collective_score` - LLM-judged collaboration quality```├── data/                             # Generated data| **MAS Pipeline** | `MAS/mas_pipeline.py` | Multi-agent code/QA task execution |
+
+
+
+---
+
+
+
+### 3. XGBoost Prediction### Step 3: Evaluate on Benchmarks│   ├── mas_benchmark_results.csv     # Training dataset (5×20)| **Agent Monitor** | `Agent_Monitor/agent_monitor.py` | LLM-based scoring & enhancement |
+
+
+
+**Training:**
+
+```python
+
+# Hyperparameter tuning via GridSearchCV```python│   └── mas_benchmark_results_FORMAT_GUIDE.csv  # Example format| **Feature Aggregator** | `Agent_Monitor/feature_aggregator.py` | 19-metric feature engineering |
+
+param_grid = {
+
+    'max_depth': [3, 5, 7],from AgentMonitor import MASOrchestrator
+
+    'learning_rate': [0.01, 0.1, 0.3],
+
+    'n_estimators': [50, 100, 200],│| **Run Orchestrator** | `Agent_Monitor/run_with_monitor.py` | Main pipeline coordinator |
+
+    'subsample': [0.7, 0.8, 1.0],
+
+    'colsample_bytree': [0.7, 0.8, 1.0],# Create orchestrator
+
+}
+
+orchestrator = MASOrchestrator(api_key="your_api_key")├── models/                           # Trained models| **Benchmark Runner** | `Agent_Monitor/benchmark_runner.py` | Dataset evaluation |
+
+# 5-fold cross-validation
+
+# Optimize for Spearman correlation
+
+```
+
+# Evaluate MAS on benchmarks│   └── xgb_model.json                # XGBoost model| **XGBoost Trainer** | `Trainer/xgb_trainer.py` | ML model training |
+
+**Metrics:**
+
+- RMSE (Root Mean Squared Error)results = await orchestrator.evaluate_mas_on_benchmarks(
+
+- MAE (Mean Absolute Error)
+
+- R² Score    mas_variant=your_mas,│| **Predictor** | `Trainer/predict.py` | Performance prediction |
+
+- **Spearman Correlation** ⭐ (paper's primary metric)
+
+    humaneval_samples=10,
+
+---
+
+    gsm8k_samples=10,├── logs/                             # Execution logs
+
+## 📊 Example Output
+
+    mmlu_samples=10
+
+### Monitoring Summary
+
+```)│---
+
+==============================================================
+
+AGENT MONITOR SUMMARY
+
+==============================================================
+
+Total Agents: 4print(results)├── requirements.txt                  # Python dependencies
+
+Total Conversations: 12
+
+Total Enhancements: 2# {
+
+
+
+Per-Agent Statistics:#   'features': {...},           # 16 features├── README.md                         # This file## 🚀 Quick Start
+
+--------------------------------------------------------------
+
+#   'humaneval_score': 0.65,     # Benchmark scores
+
+Analyzer:
+
+  Calls:        1#   'gsm8k_score': 0.72,└── INSTRUCTIONS_FOR_FRIEND.md        # Dataset generation guide
+
+  Enhancements: 0
+
+  Avg Score:    0.850#   'mmlu_score': 0.58,
+
+  Min Score:    0.850
+
+  Avg Latency:  2.341s#   'label': 0.663               # Weak supervision: 0.5*HE + 0.3*GSM8K + 0.2*MMLU```### Prerequisites
+
+  Tokens:       450
+
+# }
+
+Coder:
+
+  Calls:        1```
+
+  Enhancements: 1
+
+  Avg Score:    0.780
+
+  Min Score:    0.520
+
+  Avg Latency:  3.102s### Step 4: Train Predictor---- Python 3.8+
+
+  Tokens:       680
+
+
+
+Tester:
+
+  Calls:        1```python- Virtual environment (venv)
+
+  Enhancements: 0
+
+  Avg Score:    0.720from AgentMonitor import MASPredictor
+
+  Min Score:    0.720
+
+  Avg Latency:  2.856s## 🔧 Features Extracted (16 Total)- Gemini API key OR Ollama installed locally
+
+  Tokens:       520
+
+# Train on evaluation results
+
+Reviewer:
+
+  Calls:        1predictor = MASPredictor(model_path="models/mas_predictor.pkl")
+
+  Enhancements: 1
+
+  Avg Score:    0.810metrics = predictor.train(
+
+  Min Score:    0.580
+
+  Avg Latency:  2.945s    data_path="data/mas_benchmark_results.csv",### System Features (6)### Installation
+
+  Tokens:       590
+
+==============================================================    test_size=0.2,
+
+```
+
+    tune_hyperparams=True| Feature | Description | Range |
+
+### Feature Extraction
+
+```)
+
+==============================================================
+
+EXTRACTED FEATURES (16 Indicators)|---------|-------------|-------|```powershell
+
+==============================================================
+
+print(f"Spearman Correlation: {metrics['test_spearman']:.4f}")
+
+📊 System Metrics (6):
+
+   avg_personal_score:              0.7900```| `avg_personal_score` | Average agent performance score | 0-1 |# 1. Clone repository
+
+   min_personal_score:              0.7200
+
+   max_loops:                       1
+
+   total_latency:                   11.2440 sec
+
+   total_token_usage:               2240### Step 5: Predict New MAS| `min_personal_score` | Minimum agent performance score | 0-1 |git clone https://github.com/KumaraswamyBakkashetti/3-1project.git
+
+   num_agents_triggered_enhancement: 2
+
+
+
+🕸️  Graph Metrics (9):
+
+   num_nodes:                       4```python| `max_loops` | Maximum enhancement loops triggered | 0-10+ |cd Final
+
+   num_edges:                       3
+
+   avg_clustering:                  0.0000# Load trained model
+
+   global_transitivity:             0.0000
+
+   avg_degree_centrality:           0.5000predictor.load("models/mas_predictor.pkl")| `total_latency` | Total execution time (seconds) | 0-∞ |
+
+   avg_betweenness_centrality:      0.3333
+
+   avg_closeness_centrality:        0.6667
+
+   pagerank_entropy:                1.3863
+
+   heterogeneity_score:             0.0000# Extract features from new MAS variant| `total_token_usage` | Total tokens consumed | 0-∞ |# 2. Create virtual environment
+
+
+
+🤝 Collective Metric (1):new_features = await extractor.extract_all_features(new_mas_data)
+
+   collective_score:                0.8200
+
+==============================================================| `num_agents_triggered_enhancement` | Count of agents needing enhancement | 0-N |python -m venv venv
+
+```
+
+# Predict performance (fast!)
+
+---
+
+predicted_score = predictor.predict(new_features).\venv\Scripts\Activate.ps1
+
+## ⚠️ Important Notes
+
+
+
+### 1. Minimum Variants Required
+
+if predicted_score > 0.7:### Graph Features (9)
+
+**DO NOT use only 2 MAS variants for training!**
+
+    print("✅ Deploy this MAS variant!")
+
+The paper used **1,796 variants**. For practical results:
+
+- **Minimum:** 30-50 variantselse:| Feature | Description | Range |# 3. Install dependencies
+
+- **Recommended:** 100+ variants
+
+- **Ideal:** 500-1000 variants    print("❌ Reject - predicted performance too low")
+
+
+
+Use `scripts/generate_mas_variants.py` to create variants automatically.```|---------|-------------|-------|pip install -r requirements.txt
+
+
+
+---
+
+
+
+### 2. Enhancement Loop Configuration---| `num_nodes` | Number of agent nodes | 3-10 |
+
+
+
+**threshold:** Lower = more retries, higher = faster
+
+- 0.5 = Lenient (fewer retries)
+
+- 0.6 = Balanced ⭐ (recommended)## 📁 Project Structure| `num_edges` | Number of interactions | 2-N |# 4. Configure environment
+
+- 0.7 = Strict (more retries)
+
+
+
+**max_retries:** Higher = better quality, slower
+
+- 1 = Fast, basic improvement```| `clustering_coefficient` | Local clustering measure | 0-1 |# Create .env file with:
+
+- 2 = Balanced ⭐ (recommended)
+
+- 3 = Best quality, slowestAgentMonitor/Final/
+
+
+
+---├── AgentMonitor/              # Main framework package| `transitivity` | Global clustering measure | 0-1 |LLM_PROVIDER=gemini  # or "ollama"
+
+
+
+### 3. Weak Supervision Formula│   ├── core/
+
+
+
+```python│   │   ├── agent_monitor.py   # Non-invasive monitoring| `avg_degree_centrality` | Average node connections | 0-1 |GEMINI_API_KEY=your_api_key_here
+
+label = 0.5 * humaneval_score + 0.3 * gsm8k_score + 0.2 * mmlu_score
+
+```│   │   └── agent_wrapper.py   # Simple agent abstraction
+
+
+
+This creates a single quality metric from multiple benchmarks.│   ├── features/| `avg_betweenness_centrality` | Average bridge importance | 0-1 |GEMINI_MODEL=gemini-2.0-flash
+
+
+
+---│   │   └── feature_extractor.py  # 16 feature extraction
+
+
+
+## 🎯 Quick Commands│   ├── evaluation/| `avg_closeness_centrality` | Average node proximity | 0-1 |```
+
+
+
+```bash│   │   ├── benchmark_evaluator.py  # HumanEval/GSM8K/MMLU
+
+# Run complete demo (RECOMMENDED)
+
+python run_complete_agentmonitor.py│   │   └── mas_orchestrator.py     # Full evaluation pipeline| `pagerank_entropy` | Information distribution | 0-∞ |
+
+
+
+# Generate MAS variants (for training)│   ├── models/
+
+python scripts/generate_mas_variants.py
+
+│   │   └── predictor.py       # XGBoost trainer & predictor| `heterogeneity_score` | Network diversity | 0-∞ |### Basic Usage
+
+# Run older examples (if needed)
+
+python examples/complete_demo.py│   └── utils/
+
+python examples/simple_integration.py
+
+│
+
+# Install dependencies
+
+pip install -r requirements.txt├── examples/
+
+```
+
+│   ├── complete_demo.py       # Full end-to-end demo### Collective Score (1)```powershell
+
+---
+
+│   └── simple_integration.py  # Integration with existing MAS
+
+## 📖 Citation
+
+│| Feature | Description | Range |# Run single task
+
+```bibtex
+
+@article{chan2024agentmonitor,├── scripts/
+
+  title={AgentMonitor: A Plug-and-Play Framework for Predictive and Secure Multi-Agent Systems},
+
+  author={Chan, Chi-Min and Huang, Jianxuan and Liu, Weize and Lyu, Xinle and Liu, Zikang and Yang, Shuyu and Liu, Jiaxuan and Zhou, Yixin and Chen, Qianyu and Wang, Chunyang and others},│   └── generate_mas_variants.py  # Create 30-50 MAS variants|---------|-------------|-------|python Agent_Monitor/run_with_monitor.py
+
+  journal={arXiv preprint arXiv:2408.14972},
+
+  year={2024}│
+
+}
+
+```├── MAS/| `collective_score` | Overall MAS coordination | 0-1 |# Enter: "write python code for fibonacci sequence"
+
+
+
+**Paper:** https://arxiv.org/abs/2408.14972  │   └── mas_pipeline.py        # Example MAS implementations
+
+**Official Repo:** https://github.com/chanchimin/AgentMonitor
+
+│
+
+---
+
+├── BenchmarkDatasetFolder/
+
+## 🤝 What's New in This Implementation?
+
+│   ├── HumanEval/data.csv### Target Labels (4) - Only in Training Data# Run benchmarks (generate training data)
+
+| Feature | Research Paper | This Implementation |
+
+|---------|---------------|-------------------|│   ├── GSM8k/data.csv
+
+| 16 Features | ✅ | ✅ |
+
+| XGBoost Prediction | ✅ | ✅ |│   └── MMLU/data.csv| Label | Description | Formula |python Agent_Monitor/benchmark_runner.py
+
+| Weak Supervision | ✅ | ✅ |
+
+| Non-invasive Monitoring | ✅ | ✅ |│
+
+| **Enhancement Loops** | ❌ | ✅ ⭐ NEW! |
+
+| **LLM Scoring** | ✅ | ✅ Enhanced |├── data/|-------|-------------|---------|
+
+| **Feedback Generation** | ❌ | ✅ ⭐ NEW! |
+
+| **Production Logging** | ⚠️ Basic | ✅ Complete |│   ├── mas_variants/          # Generated MAS configs
+
+| **Easy to Use** | ⚠️ Complex | ✅ Simple API |
+
+│   └── mas_benchmark_results.csv  # Training data| `humaneval_score` | Code generation accuracy | Mean correctness |# Train XGBoost model
+
+---
+
+│
+
+## 📄 License
+
+├── models/| `gsm8k_score` | Math reasoning accuracy | Mean correctness |python Trainer/xgb_trainer.py
+
+MIT License
+
+│   └── mas_predictor.pkl      # Trained XGBoost model
+
+---
+
+│| `mmlu_score` | Knowledge accuracy | Mean correctness |
+
+## 🙏 Acknowledgments
+
+├── README.md                  # This file
+
+- Research paper authors for the methodology
+
+- Original AgentMonitor team└── requirements.txt           # Dependencies| `label_mas_score` | **Prediction Target** | 0.5×HE + 0.3×GSM + 0.2×MM |# Make predictions
+
+- NetworkX for graph analysis
+
+- XGBoost team```
+
+
+
+---python Trainer/predict.py
+
+
+
+**Built with ❤️ for Multi-Agent System research and production**---
+
+
+
+*Complete implementation ready for deployment!*---```
+
+
+## 🔄 Complete Workflow
+
+
+
+### Phase 1: Generate MAS Variants (30-50 configs)
+
+## 🚀 Installation---
+
+**Why?** Paper used 1,796 variants. Minimum 30-50 for meaningful XGBoost training.
+
+
+
+```bash
+
+# Generate 30-50 variants automatically### Prerequisites## 🦙 LLM Integration (Gemini & Ollama)
+
+python scripts/generate_mas_variants.py
+
+- Python 3.8+
+
+# Output: data/mas_variants/all_variants.json
+
+```- Virtual environment (recommended)### Current Status: Gemini (Cloud API)
+
+
+
+Creates variants by varying:- LLM API (Gemini, OpenAI, or Ollama with Llama3)
+
+- Number of agents (2, 3, 4)
+
+- Topology (sequential, parallel, iterative)**Active Configuration**:
+
+- Max loops (1, 2, 3)
+
+- Temperature (0.7, 0.9, 1.1)### Setup- Provider: Google Gemini 2.0 Flash
+
+- Agent roles (different combinations)
+
+- API Key: Configured in `.env`
+
+### Phase 2: Evaluate All Variants
+
+```bash- Model: `gemini-2.0-flash`
+
+```python
+
+from AgentMonitor import MASOrchestrator# Clone repository
+
+import json
+
+git clone <repository-url>### Switching to Ollama (Local)
+
+orchestrator = MASOrchestrator(api_key="your_api_key")
+
+results = []cd AgentMonitor/Final
+
+
+
+# Load variants**Why Ollama?**
+
+with open("data/mas_variants/all_variants.json") as f:
+
+    variants = json.load(f)# Create virtual environment- ✅ **Free**: No API costs
+
+
+
+# Evaluate each variantpython -m venv venv- ✅ **Private**: Data stays local
+
+for variant in variants:
+
+    mas = create_mas_from_config(variant)  # Your implementation- ✅ **Offline**: Works without internet
+
+    result = await orchestrator.evaluate_mas_on_benchmarks(
+
+        mas_variant=mas,# Activate virtual environment- ✅ **Fast**: Local inference on GPU/CPU
+
+        humaneval_samples=5,  # Small sample for speed
+
+        gsm8k_samples=5,# Windows:
+
+        mmlu_samples=5
+
+    )venv\Scripts\activate**Step-by-Step Integration**:
+
+    results.append(result)
+
+# Linux/Mac:
+
+# Save training data
+
+import pandas as pdsource venv/bin/activate#### 1. Create LLM Wrapper
+
+df = pd.DataFrame(results)
+
+df.to_csv("data/mas_benchmark_results.csv", index=False)Create `Agent_Monitor/llm_wrapper.py`:
+
+```
+
+# Install dependencies```python
+
+### Phase 3: Train XGBoost Model
+
+pip install -r requirements.txtimport os
+
+```python
+
+from AgentMonitor import MASPredictorimport ollama
+
+
+
+predictor = MASPredictor()# Set up environment variablesimport google.generativeai as genai
+
+metrics = predictor.train(
+
+    data_path="data/mas_benchmark_results.csv",# Windows PowerShell:
+
+    test_size=0.2,
+
+    tune_hyperparams=True$env:GEMINI_API_KEY = "your-api-key-here"class OllamaClientWrapper:
+
+)
+
+    def __init__(self, model_name="llama3"):
+
+print(f"RMSE: {metrics['test_rmse']:.4f}")
+
+print(f"R²: {metrics['test_r2']:.4f}")# Linux/Mac:        self.model_name = model_name
+
+print(f"Spearman: {metrics['test_spearman']:.4f}")  # Key metric!
+
+export GEMINI_API_KEY="your-api-key-here"    
+
+# Save model
+
+predictor.save("models/mas_predictor.pkl")```    def generate_content(self, prompt: str) -> str:
+
+```
+
+        response = ollama.generate(model=self.model_name, prompt=prompt)
+
+### Phase 4: Use for Prediction
+
+---        return response['response']
+
+```python
+
+# Quick performance check for new MAS
+
+predictor.load("models/mas_predictor.pkl")
+
+## 💡 Usageclass GeminiClientWrapper:
+
+new_mas = create_new_mas_variant()
+
+features = extract_features(new_mas)    def __init__(self, api_key: str, model_name="gemini-2.0-flash"):
+
+predicted_score = predictor.predict(features)
+
+### 1. Generate Training Dataset        genai.configure(api_key=api_key)
+
+print(f"Predicted MAS score: {predicted_score:.4f}")
+
+```        self.model_name = model_name
+
+
+
+---```bash    
+
+
+
+## 📚 API Referencepython Agent_Monitor/evaluate_mas_on_benchmarks.py    def generate_content(self, prompt: str) -> str:
+
+
+
+### AgentMonitor```        model = genai.GenerativeModel(self.model_name)
+
+
+
+**Core monitoring class**        return model.generate_content(prompt).text
+
+
+
+```python**Output**: `data/mas_benchmark_results.csv` (5 rows × 20 columns)
+
+from AgentMonitor import AgentMonitor
+
+def create_llm_client(provider=None, **kwargs):
+
+monitor = AgentMonitor(debug=False)
+
+```- Tests 5 MAS variants on 3 benchmarks    provider = provider or os.getenv("LLM_PROVIDER", "ollama")
+
+
+
+**Methods:**- Each MAS runs 30 times (10 samples × 3 benchmarks)    if provider == "ollama":
+
+- `register(agent, input_method, output_method, capability)` - Register agent for monitoring
+
+- `save(filepath)` - Save monitoring data to JSON- Features aggregated across all runs        return OllamaClientWrapper(kwargs.get("model_name", "llama3"))
+
+- `load(filepath)` - Load monitoring data from JSON
+
+- `get_agent_stats()` - Get per-agent statistics- Takes ~30-45 minutes for 10 samples    elif provider == "gemini":
+
+- `get_graph_edges()` - Get conversation graph edges
+
+        return GeminiClientWrapper(kwargs.get("api_key"), kwargs.get("model_name"))
+
+### FeatureExtractor
+
+### 2. Train XGBoost Model```
+
+**Extract 16 performance features**
+
+
+
+```python
+
+from AgentMonitor import FeatureExtractor```bash#### 2. Update agent_monitor.py
+
+
+
+extractor = FeatureExtractor(api_key="your_key")python Trainer/xgb_trainer_mas.py```python
+
+features = await extractor.extract_all_features(monitor_data)
+
+``````# Replace imports
+
+
+
+**Features:**from Agent_Monitor.llm_wrapper import create_llm_client
+
+- **System (6):** avg_personal_score, min_personal_score, max_loops, total_latency, total_token_usage, num_agents_triggered_enhancement
+
+- **Graph (9):** num_nodes, num_edges, avg_clustering, global_transitivity, centrality metrics, pagerank_entropy, heterogeneity**Output**: `models/xgb_model.json`
+
+- **Collective (1):** collective_score (LLM-judged collaboration quality)
+
+# Update __init__
+
+### BenchmarkEvaluator
+
+- Loads training data from `data/mas_benchmark_results.csv`def __init__(self, llm_client=None, threshold=0.6, ...):
+
+**Evaluate MAS on benchmarks**
+
+- Uses 16 features (15 + collective_score) as X    self.client = llm_client
+
+```python
+
+from AgentMonitor import BenchmarkEvaluator- Uses `label_mas_score` as y```
+
+
+
+evaluator = BenchmarkEvaluator()- Saves trained model
+
+
+
+# HumanEval (code execution)#### 3. Update run_with_monitor.py
+
+score = evaluator.evaluate_humaneval(mas_output, test_cases)
+
+### 3. Make Predictions```python
+
+# GSM8K (numeric answer matching)
+
+score = evaluator.evaluate_gsm8k(mas_output, expected_answer)from Agent_Monitor.llm_wrapper import create_llm_client
+
+
+
+# MMLU (text matching)```bash
+
+score = evaluator.evaluate_mmlu(mas_output, correct_answer)
+
+```python Trainer/predict_mas.pydef run_prompt(..., llm_provider=None):
+
+
+
+### MASOrchestrator```    llm_client = create_llm_client(provider=llm_provider)
+
+
+
+**Full evaluation pipeline**    monitor = AgentMonitor(llm_client=llm_client, ...)
+
+
+
+```python**Input**: New MAS features (16 values)  ```
+
+from AgentMonitor import MASOrchestrator
+
+**Output**: Predicted MAS performance score (0-1)
+
+orchestrator = MASOrchestrator(api_key="your_key")
+
+results = await orchestrator.evaluate_mas_on_benchmarks(#### 4. Update .env
+
+    mas_variant=your_mas,
+
+    humaneval_samples=10,---```env
+
+    gsm8k_samples=10,
+
+    mmlu_samples=10LLM_PROVIDER=ollama
+
+)
+
+```## 📊 Training Data FormatOLLAMA_MODEL=llama3
+
+
+
+### MASPredictorOLLAMA_HOST=http://localhost:11434
+
+
+
+**XGBoost training and prediction**### CSV Structure (20 columns)```
+
+
+
+```python
+
+from AgentMonitor import MASPredictor
+
+```csv#### 5. Install & Setup
+
+predictor = MASPredictor(model_path="models/mas_predictor.pkl")
+
+avg_personal_score,min_personal_score,max_loops,total_latency,total_token_usage,num_agents_triggered_enhancement,num_nodes,num_edges,clustering_coefficient,transitivity,avg_degree_centrality,avg_betweenness_centrality,avg_closeness_centrality,pagerank_entropy,heterogeneity_score,collective_score,humaneval_score,gsm8k_score,mmlu_score,label_mas_score```powershell
+
+# Train
+
+metrics = predictor.train(0.63,0.40,2,25.48,1384,3,5,4,0.18,0.22,0.36,0.14,0.27,2.16,0.008,0.65,0.72,0.58,0.61,0.63# Install Ollama Python package
+
+    data_path="data/mas_benchmark_results.csv",
+
+    test_size=0.2,0.71,0.52,3,32.15,1876,5,6,5,0.22,0.28,0.42,0.18,0.31,2.45,0.011,0.73,0.78,0.65,0.68,0.72pip install ollama
+
+    tune_hyperparams=True
+
+)...
+
+
+
+# Predict```# Pull Llama model
+
+score = predictor.predict(features_dict)
+
+ollama pull llama3
+
+# Save/Load
+
+predictor.save("model.pkl")**Breakdown**:
+
+predictor.load("model.pkl")
+
+```- Columns 1-6: System features# Test
+
+
+
+---- Columns 7-15: Graph featuresollama run llama3 "Hello"
+
+
+
+## ⚠️ Important Notes- Column 16: Collective score```
+
+
+
+### 1. Variant Requirements- Columns 17-19: Benchmark scores (training only)
+
+
+
+**DO NOT use only 2 MAS variants!** XGBoost cannot learn patterns from 2 samples.- Column 20: Label (training target)#### 6. Run with Ollama
+
+
+
+| Variants | Spearman Correlation | Quality |```powershell
+
+|----------|---------------------|---------|
+
+| 2 | 0.0-0.2 | ❌ Useless |---python Agent_Monitor/run_with_monitor.py
+
+| 10-20 | 0.2-0.3 | ⚠️ Very weak |
+
+| 30-50 | 0.4-0.6 | ✅ Basic patterns |# Output: [INFO] Using Ollama with model: llama3
+
+| 100+ | 0.6-0.7 | ✅ Good |
+
+| 1,796 (paper) | 0.89 | 🎯 Excellent |## 🧪 MAS Variants Tested```
+
+
+
+**Solution:** Use `scripts/generate_mas_variants.py` to create 30-50 variants automatically.
+
+
+
+### 2. Weak Supervision FormulaThe system evaluates 5 different MAS configurations:**Performance Comparison**:
+
+
+
+The paper uses weighted benchmark scores as labels:
+
+
+
+```python| Variant | Threshold | Max Retries | Description || Metric | Gemini | Ollama (Llama3) |
+
+label = 0.5 * humaneval_score + 0.3 * gsm8k_score + 0.2 * mmlu_score
+
+```|---------|-----------|-------------|-------------||--------|--------|----------------|
+
+
+
+This creates a single quality metric from multiple benchmarks.| CodeMAS_v1 | 0.6 | 2 | Balanced configuration || Cost | $0.0005/1K tokens | Free |
+
+
+
+### 3. LLM-Judged Scores| CodeMAS_Aggressive | 0.5 | 3 | More enhancement loops || Latency | ~2-5s | ~3-10s (CPU), ~1-3s (GPU) |
+
+
+
+Personal and collective scores use LLM evaluation:| CodeMAS_Conservative | 0.7 | 1 | Fewer enhancement loops || Privacy | Cloud | Local |
+
+- **Personal scores:** Quality of individual agent outputs (0-1)
+
+- **Collective score:** Overall collaboration quality (0-1)| LogicMAS_v1 | 0.6 | 2 | Logic-focused tasks || Quality | Excellent | Good |
+
+
+
+Fallback to heuristics if LLM unavailable.| QA_MAS_v1 | 0.6 | 2 | Question-answering tasks |
+
+
+
+### 4. Non-Invasive Monitoring---
+
+
+
+AgentMonitor uses **monkey-patching** to wrap agent methods without changing your code:---
+
+
+
+```python## 📦 Components
+
+# Your existing MAS (NO CHANGES!)
+
+from MAS.mas_pipeline import CodePipeline## 🔬 How It Works
+
+pipeline = CodePipeline(llm)
+
+### 1. MAS Pipeline (`MAS/mas_pipeline.py`)
+
+# Add monitoring (wrapper)
+
+monitor = AgentMonitor()### Step 1: MAS Execution with Monitoring
+
+# ... wrap agents ...
+
+**Code Pipeline**:
+
+# Run normally
+
+result = pipeline.run(task)```python- `RequirementAnalyzer`: Extracts requirements, identifies language
+
+
+
+# Features extracted!from Agent_Monitor.run_with_monitor import run_prompt- `CodeGenerator`: Generates working code with LLM
+
+```
+
+- `CodeReviewer`: Detects bugs and inefficiencies
+
+See `examples/simple_integration.py` for complete example.
+
+data, features, raw_log, summary = run_prompt(- `UnitTestWriter`: Creates test cases
+
+### 5. Expected Performance
+
+    prompt="Write a function to reverse a string",- `CodeExecutor`: Runs syntax checks and simulates execution
+
+With 30-50 variants:
+
+- **Spearman correlation:** ~0.4-0.6 (moderate)    task_type='code',
+
+- **RMSE:** Varies by dataset
+
+- **Use case:** Basic pattern detection, variant ranking    api_key=os.getenv('GEMINI_API_KEY'),**QA Pipeline**:
+
+
+
+For paper-level performance (0.89), you need:    threshold=0.6,- `RequirementAnalyzer`: Analyzes question
+
+- 1,000+ variants
+
+- Multiple MAS architectures    max_retries=2- `QAAnswerer`: Generates answer
+
+- Multiple LLM models
+
+- Full benchmark samples)- `QAReviewer`: Reviews answer quality
+
+
+
+---
+
+
+
+## 🎯 Quick Commands# features contains 16 metrics### 2. Agent Monitor (`Agent_Monitor/agent_monitor.py`)
+
+
+
+```bashprint(features)
+
+# Run demo
+
+python examples/complete_demo.py# {**6-Dimensional Scoring**:
+
+
+
+# Generate variants#   'avg_personal_score': 0.75,1. **personal_score**: Overall quality (0-1)
+
+python scripts/generate_mas_variants.py
+
+#   'min_personal_score': 0.60,2. **factual_accuracy**: Correctness (0-1)
+
+# Run simple integration
+
+python examples/simple_integration.py#   'max_loops': 2,3. **clarity**: Readability (0-1)
+
+
+
+# Install dependencies#   ...4. **safety**: Security/ethics (0-1)
+
+pip install -r requirements.txt
+
+#   'collective_score': 0.825. **code_correctness**: Syntax/logic (0-1, code only)
+
+# Create virtual environment
+
+python -m venv venv# }6. **complexity**: Appropriate complexity (0-1)
+
+venv\Scripts\activate  # Windows
+
+``````
+
+
+
+---**Enhancement Loop**:
+
+
+
+## 📊 Example Output### Step 2: Feature Aggregation```python
+
+
+
+### Feature Extractionwhile score < threshold and loops < max_retries:
+
+```json
+
+{For each MAS variant:    enhanced_output = llm.enhance(current_output, suggestions)
+
+  "avg_personal_score": 0.82,
+
+  "min_personal_score": 0.75,1. Run on 10 HumanEval tasks → collect 10 feature sets    score = llm.score(enhanced_output)
+
+  "max_loops": 2,
+
+  "total_latency": 4.5,2. Run on 10 GSM8K tasks → collect 10 feature sets    loops += 1
+
+  "total_token_usage": 1500,
+
+  "num_agents_triggered_enhancement": 1,3. Run on 10 MMLU tasks → collect 10 feature sets```
+
+  "num_nodes": 3,
+
+  "num_edges": 2,4. **Aggregate**: Average each of 15 features across all 30 runs
+
+  "avg_clustering": 0.0,
+
+  "global_transitivity": 0.0,5. Compute benchmark scores (accuracy on each benchmark)### 3. Feature Aggregator (`Agent_Monitor/feature_aggregator.py`)
+
+  "avg_degree_centrality": 0.67,
+
+  "avg_betweenness_centrality": 0.33,6. Compute label: `0.5 × humaneval + 0.3 × gsm8k + 0.2 × mmlu`
+
+  "avg_closeness_centrality": 0.83,
+
+  "pagerank_entropy": 1.09,**19 Features Collected**:
+
+  "heterogeneity_score": 0.15,
+
+  "collective_score": 0.78### Step 3: XGBoost Training
+
+}
+
+```**System Metrics** (8):
+
+
+
+### Benchmark Evaluation```python- `avg_personal_score`, `max_personal_score`, `min_personal_score`
+
+```json
+
+{# X: 16 features (15 + collective_score)- `total_latency_sec`, `avg_token_count`
+
+  "humaneval_score": 0.65,
+
+  "gsm8k_score": 0.72,# y: label_mas_score- `max_loops`, `avg_loops`
+
+  "mmlu_score": 0.58,
+
+  "label": 0.663- `collective_score` (LLM-based system-level score)
+
+}
+
+```model = xgb.XGBRegressor(
+
+
+
+### Prediction    n_estimators=100,**Graph Metrics** (11):
+
+```
+
+Predicted MAS score: 0.687    max_depth=5,- `num_nodes`, `num_edges`, `avg_degree`
+
+Feature importance:
+
+  1. collective_score: 0.25    learning_rate=0.1- `clustering_coefficient`, `transitivity`
+
+  2. avg_personal_score: 0.18
+
+  3. num_nodes: 0.12)- `avg_betweenness_centrality`, `avg_closeness_centrality`
+
+  4. total_latency: 0.10
+
+  ...model.fit(X, y)- `pagerank_entropy`, `authority_entropy`
+
+```
+
+```- `density`, `diameter`
+
+---
+
+
+
+## 📖 Citation
+
+### Step 4: Prediction**Benchmark Scores** (3):
+
+If you use this implementation, please cite the original paper:
+
+- `humaneval_score` (code correctness)
+
+```bibtex
+
+@article{chan2024agentmonitor,```python- `gsm8k_score` (math reasoning)
+
+  title={AgentMonitor: A Plug-and-Play Framework for Predictive and Secure Multi-Agent Systems},
+
+  author={Chan, Chi-Min and Huang, Jianxuan and Liu, Weize and Lyu, Xinle and Liu, Zikang and Yang, Shuyu and Liu, Jiaxuan and Zhou, Yixin and Chen, Qianyu and Wang, Chunyang and others},# New MAS execution- `mmlu_score` (knowledge)
+
+  journal={arXiv preprint arXiv:2408.14972},
+
+  year={2024}new_features = [0.68, 0.45, 2, 27.5, 1500, 3, 5, 4, 0.20, ...]  # 16 values
+
+}
+
+```### 4. XGBoost Model (`Trainer/xgb_trainer.py`)
+
+
+
+**Paper:** https://arxiv.org/abs/2408.14972  # Predict performance
+
+**Official Repo:** https://github.com/chanchimin/AgentMonitor
+
+predicted_score = model.predict([new_features])**Model Configuration**:
+
+---
+
+print(f"Predicted MAS Score: {predicted_score[0]:.4f}")```python
+
+## 🤝 Contributing
+
+```XGBRegressor(
+
+Issues and pull requests welcome! This is a research implementation - there's room for improvement:
+
+    n_estimators=100,
+
+- [ ] Add more MAS frameworks (AutoGen, LangChain, ChatDev)
+
+- [ ] Implement safety post-editing module---    max_depth=5,
+
+- [ ] Add more benchmark datasets
+
+- [ ] Optimize feature extraction (caching)    learning_rate=0.1,
+
+- [ ] Create web dashboard (Streamlit/Gradio)
+
+## 📈 Expected Performance    objective='reg:squarederror'
+
+---
+
+)
+
+## 📄 License
+
 ### Training Data```
+
+MIT License - See LICENSE file for details.
 
 - **Rows**: 5 MAS variants
 
+---
+
 - **R² Score**: 0.7-0.9 (on simulated data)**Training Requirements**:
+
+## 🙏 Acknowledgments
 
 - **MAE**: 0.05-0.15- Minimum 10 rows (50-100 recommended)
 
-- 18 input features → 1 target (`collective_score`)
+- Research paper authors for the methodology
 
-### Use Cases- Cross-validation: 5-fold KFold
+- Official AgentMonitor repository for inspiration- 18 input features → 1 target (`collective_score`)
 
-- **Quick MAS evaluation**: Predict performance without running expensive benchmarks- Saved as `models/xgb_model.json`
+- NetworkX team for graph analysis tools
 
-- **MAS configuration tuning**: Test different thresholds/retries
+- XGBoost team for the prediction framework### Use Cases- Cross-validation: 5-fold KFold
 
-- **Agent monitoring**: Track system health during execution---
+
+
+---- **Quick MAS evaluation**: Predict performance without running expensive benchmarks- Saved as `models/xgb_model.json`
+
+
+
+**Built with ❤️ for Multi-Agent System research and production**- **MAS configuration tuning**: Test different thresholds/retries
+
+
+
+*Last Updated: October 11, 2025*- **Agent monitoring**: Track system health during execution---
+
 
 
 
