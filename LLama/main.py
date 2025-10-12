@@ -426,12 +426,8 @@ async def generate_training_data(tasks: list):
     print(f"Strategy: Different MAS variant per task")
     print(f"Output: data/training_data.csv\n")
     
-    # Ensure output folder exists
-    os.makedirs("data", exist_ok=True)
-
-    # We'll append each sample as it's produced to avoid holding everything in memory
-    csv_path = os.path.join("data", "training_data.csv")
-
+    all_data = []
+    
     for i, task in enumerate(tasks, 1):
         print(f"\n{'='*70}")
         print(f"[Sample {i}/{len(tasks)}]")
@@ -448,16 +444,9 @@ async def generate_training_data(tasks: list):
             # STEP 4: Benchmark evaluation (quality heuristic)
             bench_scores = await evaluate_on_benchmarks(result)
             
-            # STEP 5: Combine into training sample and append to CSV immediately
+            # STEP 5: Combine into training sample
             row = {**features, **bench_scores}
-
-            # Convert to single-row DataFrame and append
-            try:
-                df_row = pd.DataFrame([row])
-                write_header = not os.path.exists(csv_path)
-                df_row.to_csv(csv_path, mode='a', header=write_header, index=False)
-            except Exception as e:
-                print(f"❌ Failed to write sample {i} to CSV: {e}")
+            all_data.append(row)
             
             print(f"\n✅ Sample {i} complete")
             print(f"   Features: {len(features)} extracted")
@@ -469,18 +458,19 @@ async def generate_training_data(tasks: list):
             traceback.print_exc()
             continue
     
-    # Final summary
-    if os.path.exists(csv_path):
-        try:
-            df = pd.read_csv(csv_path)
-            print(f"\n{'='*70}")
-            print(f"✅ Generated {len(df)} samples (so far)")
-            print(f"💾 Saved: {csv_path}")
-            print(f"{'='*70}\n")
-        except Exception as e:
-            print(f"✅ Generation finished — CSV available at: {csv_path} (read error: {e})")
+    # Save CSV
+    if all_data:
+        df = pd.DataFrame(all_data)
+        os.makedirs("data", exist_ok=True)
+        df.to_csv("data/training_data.csv", index=False)
+        
+        print(f"\n{'='*70}")
+        print(f"✅ Generated {len(df)} samples")
+        print(f"💾 Saved: data/training_data.csv")
+        print(f"{'='*70}\n")
+        print(df.head())
     else:
-        print("⚠️ No samples were written to CSV.")
+        print("\n❌ No data generated")
 
 
 # ============================================================================
