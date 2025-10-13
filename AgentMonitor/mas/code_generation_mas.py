@@ -95,7 +95,17 @@ class CodeGenerationMAS:
                 agent_name=agent_name,
                 capability="gemini"
             )
-            return result.get("output", "") if isinstance(result, dict) else str(result)
+            # Extract output and ensure it's not None or empty
+            if isinstance(result, dict):
+                output = result.get("output", "")
+            else:
+                output = str(result) if result else ""
+            
+            # Safeguard against empty output
+            if not output or output.strip() == "":
+                output = f"# {agent_name} generated no output"
+            
+            return output
         else:
             # Direct execution
             return agent.generate_response(task)
@@ -113,7 +123,20 @@ class Agent:
         """Generate response for a task"""
         try:
             full_prompt = f"You are a {self.role}. {prompt}"
-            response = self.llm.generate_content(full_prompt)
-            return response.text
+            
+            # Handle different LLM interfaces
+            if callable(self.llm):
+                # Function interface (like llama_call)
+                response = self.llm(full_prompt)
+                return response if isinstance(response, str) else str(response)
+            elif hasattr(self.llm, 'generate_content'):
+                # Model object interface (like Gemini model)
+                response = self.llm.generate_content(full_prompt)
+                return response.text
+            else:
+                return f"Error: LLM has unknown interface"
+                
         except Exception as e:
-            return f"Error: {str(e)}"
+            error_msg = f"Error in {self.name}: {str(e)}"
+            print(f"🚨 {error_msg}")
+            return error_msg

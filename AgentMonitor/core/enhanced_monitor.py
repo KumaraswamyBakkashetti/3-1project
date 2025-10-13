@@ -40,6 +40,7 @@ class EnhancedAgentMonitor:
     def __init__(
         self,
         api_key: Optional[str] = None,
+        llm: Optional[Any] = None,  # NEW: Accept LLM function or model directly
         threshold: float = 0.6,
         max_retries: int = 2,
         log_dir: str = "logs",
@@ -47,7 +48,8 @@ class EnhancedAgentMonitor:
     ):
         """
         Args:
-            api_key: Gemini API key for LLM scoring
+            api_key: Gemini API key for LLM scoring (creates model internally)
+            llm: Pre-configured LLM function or model (alternative to api_key)
             threshold: Score threshold for enhancement (0-1)
             max_retries: Max enhancement attempts
             log_dir: Directory for logs
@@ -60,13 +62,17 @@ class EnhancedAgentMonitor:
         self.debug = debug
         
         # Initialize LLM for scoring
-        if api_key:
+        if llm:
+            # Use provided LLM (function or model)
+            self.llm = llm
+        elif api_key:
+            # Create model from API key
             genai.configure(api_key=api_key)
-            self.llm = genai.GenerativeModel("models/gemini-2.0-flash")  # FIXED: Using available model
+            self.llm = genai.GenerativeModel("models/gemini-2.0-flash")
         else:
             self.llm = None
             if debug:
-                print("[WARNING] No API key - LLM scoring disabled")
+                print("[WARNING] No API key or LLM provided - LLM scoring disabled")
         
         # Monitoring data (follows paper structure)
         self.monitor_data = {
@@ -117,8 +123,8 @@ class EnhancedAgentMonitor:
             self._initialize_agent_stats(agent_name, capability)
         
         attempts = 0
-        best_output = None
-        best_score = 0.0
+        best_output = ""  # Initialize with empty string instead of None
+        best_score = -1.0  # Start with -1 so any score (even 0) will be accepted
         enhanced = False
         
         while attempts <= self.max_retries:
@@ -212,6 +218,10 @@ class EnhancedAgentMonitor:
         self.monitor_data["agent_stats"][agent_name]["enhancement_triggered"] += (1 if enhanced else 0)
         self.monitor_data["agent_stats"][agent_name]["scores"].append(best_score)
         
+        # Ensure we always have output (safeguard against None or empty)
+        if not best_output:
+            best_output = "# No output generated - agent may have failed"
+        
         return {
             "output": best_output,
             "score": best_score,
@@ -251,8 +261,17 @@ Rate the output on a scale of 0.0 to 1.0 based on:
 Return ONLY a number between 0.0 and 1.0 (e.g., 0.85)
 """
             
-            response = self.llm.generate_content(prompt)
-            score_text = response.text.strip()
+            # Handle different LLM interfaces
+            if callable(self.llm):
+                # Function interface (like llama_call)
+                response_text = self.llm(prompt)
+                score_text = response_text.strip() if isinstance(response_text, str) else str(response_text).strip()
+            elif hasattr(self.llm, 'generate_content'):
+                # Model object interface (like Gemini model)
+                response = self.llm.generate_content(prompt)
+                score_text = response.text.strip()
+            else:
+                return self._heuristic_score(output)
             
             # Extract number
             import re
@@ -299,10 +318,20 @@ Current Output:
 Provide brief, actionable feedback (2-3 sentences) on how to improve this output to meet the requirements better.
 """
             
-            response = self.llm.generate_content(prompt)
-            return response.text.strip()
+            # Handle different LLM interfaces
+            if callable(self.llm):
+                # Function interface (like llama_call)
+                response_text = self.llm(prompt)
+                return response_text.strip() if isinstance(response_text, str) else str(response_text).strip()
+            elif hasattr(self.llm, 'generate_content'):
+                # Model object interface (like Gemini model)
+                response = self.llm.generate_content(prompt)
+                return response.text.strip()
+            else:
+                return f"Score {score:.2f} is below threshold. Please provide more detail."
             
-        except Exception:
+        except Exception as e:
+            print(f"[WARNING] Enhancement feedback generation failed: {e}")
             return f"Score {score:.2f} is below threshold. Please provide more detail and ensure correctness."
     
     def _initialize_agent_stats(self, agent_name: str, capability: str):
