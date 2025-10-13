@@ -8,7 +8,7 @@ from pathlib import Path
 # Add AgentMonitor to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from llama import llama_call
+from gemini_api import gemini_call
 from mas.code_generation_mas import CodeGenerationMAS
 from core.enhanced_monitor import EnhancedAgentMonitor
 
@@ -24,8 +24,8 @@ async def test_mas():
     task = "Write a Python function to calculate factorial of a number"
     
     print(f"\n📝 Task: {task}")
-    print(f"\n🔧 LLM Type: {type(llama_call)}")
-    print(f"🔧 LLM Callable: {callable(llama_call)}")
+    print(f"\n🔧 LLM Type: {type(gemini_call)}")
+    print(f"🔧 LLM Callable: {callable(gemini_call)}")
     
     # Test 1: Direct LLM call
     print("\n" + "=" * 80)
@@ -33,7 +33,7 @@ async def test_mas():
     print("=" * 80)
     
     try:
-        direct_response = llama_call("Write a hello world function in Python")
+        direct_response = gemini_call("Write a hello world function in Python")
         print(f"✅ Direct LLM Response ({len(direct_response)} chars):")
         print(direct_response[:200])
     except Exception as e:
@@ -47,7 +47,7 @@ async def test_mas():
     
     try:
         mas_simple = CodeGenerationMAS(
-            llm=llama_call,
+            llm=gemini_call,
             threshold=0.7,
             max_retries=1
         )
@@ -69,13 +69,13 @@ async def test_mas():
     
     try:
         mas = CodeGenerationMAS(
-            llm=llama_call,
+            llm=gemini_call,
             threshold=0.7,
             max_retries=1
         )
         
         monitor = EnhancedAgentMonitor(
-            llm=llama_call,
+            llm=gemini_call,
             threshold=0.7,
             max_retries=1,
             debug=True  # Enable debug output

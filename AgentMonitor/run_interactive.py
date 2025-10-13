@@ -56,7 +56,7 @@ async def run_mas_with_prediction(task: str, variant_config: dict):
     Returns:
         tuple: (predicted_score, features, result)
     """
-    from llama import llama_call
+    from gemini_api import gemini_call
     
     # Create monitor with variant config
     monitor = EnhancedAgentMonitor(
@@ -65,7 +65,7 @@ async def run_mas_with_prediction(task: str, variant_config: dict):
     )
     
     # Create and run MAS
-    mas = CodeGenerationMAS(llama_call, monitor)
+    mas = CodeGenerationMAS(gemini_call, monitor)
     result = await mas.run(task)
     monitor_data = monitor.get_summary()
     

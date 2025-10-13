@@ -35,7 +35,7 @@ async def predict_mas_quality(task: str):
     Returns:
         tuple: (predicted_score, features, mas_output)
     """
-    from llama import llama_call
+    from gemini_api import gemini_call
     
     print(f"\n{'='*70}")
     print(f"TASK: {task}")
@@ -44,7 +44,7 @@ async def predict_mas_quality(task: str):
     # Step 1: Run MAS with monitoring
     print("🤖 Running MAS with monitoring...")
     monitor = EnhancedAgentMonitor(threshold=0.6, max_retries=1)
-    mas = CodeGenerationMAS(llama_call, monitor)
+    mas = CodeGenerationMAS(gemini_call, monitor)
     
     result = await mas.run(task)
     monitor_data = monitor.get_summary()

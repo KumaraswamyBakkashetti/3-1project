@@ -68,7 +68,7 @@ def get_random_mas_config():
 
 async def generate_single_sample(task: str, mas_config: dict, sample_num: int):
     """Generate one training sample"""
-    from llama import llama_call
+    from gemini_api import gemini_call
     
     print(f"\n{'='*70}")
     print(f"SAMPLE {sample_num}: {task[:50]}...")
@@ -81,7 +81,7 @@ async def generate_single_sample(task: str, mas_config: dict, sample_num: int):
     )
     
     # Create MAS
-    mas = CodeGenerationMAS(llama_call, monitor)
+    mas = CodeGenerationMAS(gemini_call, monitor)
     
     # Run MAS with monitoring
     print(f"🤖 Running {mas_config['architecture']} MAS...")

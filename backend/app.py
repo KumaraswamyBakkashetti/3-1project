@@ -217,10 +217,10 @@ async def run_mas(request: RunRequest, user = Depends(verify_token)):
         
         # Import necessary components from AgentMonitor
         from AgentMonitor import EnhancedAgentMonitor, CodeGenerationMAS, MASPredictor
-        from AgentMonitor.llama import llama_call
+        from AgentMonitor.gemini_api import gemini_call
         
-        # Use llama_call as LLM
-        llm = llama_call
+        # Use gemini_call as LLM (with automatic key rotation)
+        llm = gemini_call
         
         # Determine if this is an enhancement request or initial request
         is_enhancement = bool(request.code and request.code.strip())
