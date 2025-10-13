@@ -22,8 +22,8 @@ except Exception as e:
     sys.exit(1)
 
 try:
-    from gemini_api import llama_call
-    print("✅ LLM interface: Gemini API (gemini-2.0-flash)")
+    from llama import llama_call
+    print("✅ LLM interface: Llama via Ollama (qwen3:8b)")
 except Exception as e:
     print(f"❌ LLM import failed: {e}")
     sys.exit(1)

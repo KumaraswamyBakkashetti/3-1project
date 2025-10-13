@@ -8,7 +8,6 @@ Follows the research paper: Multiple specialized agents collaborating.
 
 import asyncio
 from typing import Any, List, Dict, Optional
-from gemini_api import llama_call
 
 
 class CodeGenerationMAS:
@@ -146,9 +145,16 @@ class Agent:
         """Generate response for a task"""
         try:
             full_prompt = f"You are a {self.role}. {prompt}"
-            # Use llama_call helper directly
-            response = llama_call(full_prompt)
-            return response
+            
+            # Handle different LLM interfaces
+            if callable(self.llm):
+                response = self.llm(full_prompt)
+            elif hasattr(self.llm, 'generate_content'):
+                response = self.llm.generate_content(full_prompt).text
+            else:
+                return "Error: Invalid LLM"
+                
+            return response if isinstance(response, str) else str(response)
         except Exception as e:
             return f"Error: {str(e)}"
 

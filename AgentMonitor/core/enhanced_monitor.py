@@ -8,10 +8,10 @@ import asyncio
 import json
 import time
 import os
+import requests
 from typing import Any, Callable, Dict, List, Optional, Tuple
 from datetime import datetime
 from pathlib import Path
-import google.generativeai as genai
 
 
 class EnhancedAgentMonitor:
@@ -24,7 +24,7 @@ class EnhancedAgentMonitor:
     
     Usage:
         monitor = EnhancedAgentMonitor(
-            api_key="your_key",
+            api_key="not_needed_for_ollama",
             threshold=0.6,  # Retry if score < 0.6
             max_retries=2
         )
@@ -48,7 +48,7 @@ class EnhancedAgentMonitor:
     ):
         """
         Args:
-            api_key: Gemini API key for LLM scoring (creates model internally)
+            api_key: Not used (kept for backward compatibility)
             llm: Pre-configured LLM function or model (alternative to api_key)
             threshold: Score threshold for enhancement (0-1)
             max_retries: Max enhancement attempts
@@ -61,18 +61,15 @@ class EnhancedAgentMonitor:
         self.log_dir.mkdir(exist_ok=True)
         self.debug = debug
         
-        # Initialize LLM for scoring
+        # Initialize LLM for scoring using Ollama
         if llm:
             # Use provided LLM (function or model)
             self.llm = llm
-        elif api_key:
-            # Create model from API key
-            genai.configure(api_key=api_key)
-            self.llm = genai.GenerativeModel("models/gemini-2.0-flash")
         else:
-            self.llm = None
+            # Create Llama function via Ollama
+            self.llm = self._create_llama_function()
             if debug:
-                print("[WARNING] No API key or LLM provided - LLM scoring disabled")
+                print("[INFO] Using Llama via Ollama for LLM scoring")
         
         # Monitoring data (follows paper structure)
         self.monitor_data = {
@@ -88,13 +85,40 @@ class EnhancedAgentMonitor:
         
         # Enhancement tracking
         self.enhancement_history = []
+    
+    def _create_llama_function(self):
+        """Create a Llama function using Ollama API"""
+        def llama_call(prompt):
+            try:
+                ollama_url = os.getenv('OLLAMA_BASE_URL', 'https://k7xc1qwz-11434.inc1.devtunnels.ms')
+                llama_model = os.getenv('LLAMA_MODEL', 'qwen3:8b')
+                
+                url = f"{ollama_url}/api/generate"
+                payload = {
+                    "model": llama_model,
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {
+                        "temperature": 0.7,
+                        "num_predict": 2048
+                    }
+                }
+                
+                response = requests.post(url, json=payload, timeout=120)
+                response.raise_for_status()
+                result = response.json()
+                return result.get('response', '').strip()
+            except Exception as e:
+                return f"Error calling Llama: {str(e)}"
+        
+        return llama_call
         
     async def run_agent_with_enhancement(
         self,
         agent: Any,
         task: str,
         agent_name: str,
-        capability: str = "gemini",
+        capability: str = "llama",
         context: Optional[Dict] = None
     ) -> Dict[str, Any]:
         """

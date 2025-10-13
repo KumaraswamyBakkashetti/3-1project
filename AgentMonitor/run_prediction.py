@@ -35,7 +35,7 @@ async def predict_mas_quality(task: str):
     Returns:
         tuple: (predicted_score, features, mas_output)
     """
-    from gemini_api import llama_call
+    from llama import llama_call
     
     print(f"\n{'='*70}")
     print(f"TASK: {task}")

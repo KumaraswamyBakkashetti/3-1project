@@ -217,7 +217,7 @@ async def run_mas(request: RunRequest, user = Depends(verify_token)):
         
         # Import necessary components from AgentMonitor
         from AgentMonitor import EnhancedAgentMonitor, CodeGenerationMAS, MASPredictor
-        from gemini_api import llama_call
+        from AgentMonitor.llama import llama_call
         
         # Use llama_call as LLM
         llm = llama_call
@@ -227,17 +227,17 @@ async def run_mas(request: RunRequest, user = Depends(verify_token)):
         
         if is_enhancement:
             print(f"🔄 Enhancement mode - improving existing code ({len(request.code)} chars)")
-            # Enhancement: Use stricter threshold and more retries
+            # Enhancement: Faster configuration for Llama
             mas = CodeGenerationMAS(
                 llm=llm,
-                threshold=0.8,  # Higher threshold for enhancement
-                max_retries=3  # More retries for better quality
+                threshold=0.75,  # Reasonable threshold
+                max_retries=1    # Reduced retries for speed
             )
             
             monitor = EnhancedAgentMonitor(
                 llm=llm,
-                threshold=0.8,  # Higher threshold
-                max_retries=2,  # More enhancement loops
+                threshold=0.75,  # Reasonable threshold
+                max_retries=1,   # Single enhancement loop for speed
                 debug=False
             )
             
@@ -248,16 +248,16 @@ async def run_mas(request: RunRequest, user = Depends(verify_token)):
             
         else:
             print(f"✨ Initial mode - generating new code")
-            # Initial: Standard configuration
+            # Initial: Optimized for Llama speed
             mas = CodeGenerationMAS(
                 llm=llm,
-                threshold=0.7,
-                max_retries=2
+                threshold=0.65,  # Lower threshold for faster completion
+                max_retries=1    # Reduced retries
             )
             
             monitor = EnhancedAgentMonitor(
                 llm=llm,
-                threshold=0.7,
+                threshold=0.65,  # Lower threshold
                 max_retries=1,
                 debug=False
             )

@@ -304,7 +304,7 @@ Return ONLY a JSON object: {{"collective_score": <float>}}
         # Capability mapping (higher = more capable)
         if "gpt-4" in capability_lower or "claude-3" in capability_lower:
             return 3.0
-        elif "gpt-3.5" in capability_lower or "gemini" in capability_lower:
+        elif "gpt-3.5" in capability_lower or "gemini" in capability_lower or "llama" in capability_lower:
             return 2.0
         elif "70b" in capability_lower or "65b" in capability_lower:
             return 2.5

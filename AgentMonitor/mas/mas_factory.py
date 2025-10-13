@@ -269,7 +269,7 @@ class SimpleMAS:
                     agent=agent,
                     task=f"Previous: {result}\n\nYour task: {task}",
                     agent_name=agent.name,
-                    capability="gemini"
+                    capability="llama"
                 )
                 result = output.get("output", "") if isinstance(output, dict) else str(output)
             else:
@@ -288,7 +288,7 @@ class SimpleMAS:
                     agent=agent,
                     task=task,
                     agent_name=agent.name,
-                    capability="gemini"
+                    capability="llama"
                 ))
             else:
                 tasks.append(asyncio.create_task(
@@ -310,7 +310,7 @@ class SimpleMAS:
                 agent=manager,
                 task=f"Plan how to solve: {task}",
                 agent_name=manager.name,
-                capability="gemini"
+                capability="llama"
             )
             plan_text = plan.get("output", "") if isinstance(plan, dict) else str(plan)
         else:
@@ -324,7 +324,7 @@ class SimpleMAS:
                     agent=worker,
                     task=f"Plan: {plan_text}\n\nExecute: {task}",
                     agent_name=worker.name,
-                    capability="gemini"
+                    capability="llama"
                 )
                 results.append(output.get("output", "") if isinstance(output, dict) else str(output))
             else:

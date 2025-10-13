@@ -93,7 +93,7 @@ class CodeGenerationMAS:
                 agent=agent,
                 task=task,
                 agent_name=agent_name,
-                capability="gemini"
+                capability="llama"
             )
             # Extract output and ensure it's not None or empty
             if isinstance(result, dict):

@@ -8,7 +8,7 @@ from pathlib import Path
 # Add AgentMonitor to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from gemini_api import llama_call
+from llama import llama_call
 from mas.code_generation_mas import CodeGenerationMAS
 from core.enhanced_monitor import EnhancedAgentMonitor
 

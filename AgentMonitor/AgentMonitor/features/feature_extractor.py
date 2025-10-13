@@ -11,7 +11,6 @@ import networkx as nx
 import math
 import json
 from typing import Dict, List, Tuple, Any, Optional
-from gemini_api import llama_call
 
 
 class FeatureExtractor:

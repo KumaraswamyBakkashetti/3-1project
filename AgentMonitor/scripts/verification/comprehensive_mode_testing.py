@@ -40,16 +40,16 @@ varying = sum(1 for col in feature_cols if df[col].std() > 0.01)
 print(f"✅ Features with variance: {varying}/{len(feature_cols)}")
 print()
 
-# Test 3: Gemini API
-print("🔌 Test 3: Gemini API Connection")
+# Test 3: Llama API
+print("🔌 Test 3: Llama API Connection")
 print("-" * 80)
 try:
-    from gemini_api import llama_call
+    from llama import llama_call
     response = llama_call("Say 'OK' in one word")
-    print(f"✅ Gemini API working")
+    print(f"✅ Llama API working")
     print(f"   Response: {response[:50]}...")
 except Exception as e:
-    print(f"❌ Gemini API failed: {e}")
+    print(f"❌ Llama API failed: {e}")
 print()
 
 # Test 4: Prediction Mode (without running full MAS)

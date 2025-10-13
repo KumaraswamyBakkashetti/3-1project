@@ -56,7 +56,7 @@ async def run_mas_with_prediction(task: str, variant_config: dict):
     Returns:
         tuple: (predicted_score, features, result)
     """
-    from gemini_api import llama_call
+    from llama import llama_call
     
     # Create monitor with variant config
     monitor = EnhancedAgentMonitor(

@@ -11,7 +11,6 @@ import os
 from typing import Any, Callable, Dict, List, Optional, Tuple
 from datetime import datetime
 from pathlib import Path
-from gemini_api import llama_call
 
 
 class EnhancedAgentMonitor:
@@ -253,8 +252,17 @@ Rate the output on a scale of 0.0 to 1.0 based on:
 Return ONLY a number between 0.0 and 1.0 (e.g., 0.85)
 """
             
-            # Use llama_call helper which returns a text string
-            score_text = llama_call(prompt).strip()
+            # Handle different LLM interfaces
+            if callable(self.llm):
+                # Function interface (like llama_call)
+                response_text = self.llm(prompt)
+                score_text = response_text.strip() if isinstance(response_text, str) else str(response_text).strip()
+            elif hasattr(self.llm, 'generate_content'):
+                # Model object interface (like Gemini model)
+                response = self.llm.generate_content(prompt)
+                score_text = response.text.strip()
+            else:
+                return self._heuristic_score(output)
             
             # Extract number
             import re
@@ -319,8 +327,15 @@ Current Output:
 Provide brief, actionable feedback (2-3 sentences) on how to improve this output to meet the requirements better.
 """
             
-            # Use llama_call to obtain feedback string
-            return llama_call(prompt).strip()
+            # Handle different LLM interfaces
+            if callable(self.llm):
+                feedback = self.llm(prompt)
+                return feedback.strip() if isinstance(feedback, str) else str(feedback).strip()
+            elif hasattr(self.llm, 'generate_content'):
+                response = self.llm.generate_content(prompt)
+                return response.text.strip()
+            else:
+                return f"Score {score:.2f} is below threshold. Please provide more detail and ensure correctness."
             
         except Exception:
             return f"Score {score:.2f} is below threshold. Please provide more detail and ensure correctness."
