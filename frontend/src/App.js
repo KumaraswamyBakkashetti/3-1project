@@ -11,26 +11,22 @@ import AdminPromptDetail from './pages/AdminPromptDetail';
 function App() {
   const [user, setUser] = React.useState(null);
 
-  React.useEffect(() => {
-    const token = localStorage.getItem('token');
-    const username = localStorage.getItem('username');
-    const role = localStorage.getItem('role');
-    if (token && username && role) {
-      setUser({ username, role, token });
-    }
-  }, []);
+  // Removed auto-login from localStorage to prevent automatic login on page reload
+  // Users will need to login each time they open the application
 
   const handleLogin = (userData) => {
-    localStorage.setItem('token', userData.token);
-    localStorage.setItem('username', userData.username);
-    localStorage.setItem('role', userData.role);
+    // Store in sessionStorage instead of localStorage
+    // This will clear when browser/tab is closed
+    sessionStorage.setItem('token', userData.token);
+    sessionStorage.setItem('username', userData.username);
+    sessionStorage.setItem('role', userData.role);
     setUser(userData);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('username');
-    localStorage.removeItem('role');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('username');
+    sessionStorage.removeItem('role');
     setUser(null);
   };
 

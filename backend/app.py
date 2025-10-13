@@ -299,6 +299,11 @@ async def run_mas(request: RunRequest, user = Depends(verify_token)):
         
         print(f"{'Enhanced' if is_enhancement else 'Initial'} predicted score: {predicted_score:.4f}")
         
+        # Store initial results
+        initial_code = None
+        initial_score = None
+        initial_monitor_data = None
+        
         # STEP 4: Extract clean code
         print(f"🔍 DEBUG - Raw result type: {type(result)}")
         print(f"🔍 DEBUG - Raw result value: {result}")
@@ -323,8 +328,14 @@ async def run_mas(request: RunRequest, user = Depends(verify_token)):
         print(f"✅ Code extracted ({len(clean_code)} characters)")
         print(f"🔍 DEBUG - Clean code preview: {clean_code[:200]}")
         
+        # Store initial code and score before enhancement
+        initial_code = clean_code
+        initial_score = predicted_score
+        initial_monitor_data = monitor_data
+        
         # STEP 5: Optional auto-enhancement if score is too low (only on initial run)
         auto_enhanced = False
+        enhancement_loops = 0
         if not is_enhancement and predicted_score < 0.75:
             print(f"⚠️ Score {predicted_score:.4f} below threshold 0.75, triggering auto-enhancement...")
             try:
@@ -365,6 +376,7 @@ async def run_mas(request: RunRequest, user = Depends(verify_token)):
                     predicted_score = enhanced_score
                     monitor_data = enhanced_monitor_data
                     auto_enhanced = True
+                    enhancement_loops = 1
                     print("✅ Using auto-enhanced version")
                 else:
                     print("⚠️ Auto-enhancement didn't improve score, keeping original")
@@ -392,11 +404,16 @@ async def run_mas(request: RunRequest, user = Depends(verify_token)):
         return {
             "run_id": str(run_id),
             "predicted_score": float(predicted_score),
+            "initial_score": float(initial_score) if initial_score else float(predicted_score),
             "features": features,
             "result": clean_code,  # Return clean code, not raw result
             "code": clean_code,  # Also include as 'code' for clarity
+            "initial_code": initial_code,  # Original code before enhancement
+            "final_code": clean_code,  # Code after enhancement (if any)
             "is_enhancement": is_enhancement,  # Flag to indicate if this was an enhancement
-            "auto_enhanced": auto_enhanced  # Flag to indicate if auto-enhancement was applied
+            "auto_enhanced": auto_enhanced,  # Flag to indicate if auto-enhancement was applied
+            "enhancement_loops": enhancement_loops,  # Number of enhancement iterations
+            "monitor_data": monitor_data  # Full monitoring data for admin view
         }
     except Exception as e:
         print(f"ERROR in run_mas: {str(e)}")
