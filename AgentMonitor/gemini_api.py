@@ -61,62 +61,46 @@ class GeminiKeyManager:
         # All keys exhausted
         return False
     
-    def call_gemini(self, prompt, model_name="gemini-2.5-flash", timeout=30):
-        """
-        Call Gemini with timeout and key rotation
-        
-        Args:
-            prompt (str): The prompt
-            model_name (str): Model to use
-            timeout (int): Timeout in seconds (default 30)
-            
-        Returns:
-            str: Generated response
-        """
-        max_retries = len(self.api_keys)
+    def call_gemini(self, prompt, model_name="gemini-2.5-flash", timeout=20):
+        """Call Gemini with timeout"""
+        max_retries = min(3, len(self.api_keys))
         
         for attempt in range(max_retries):
             try:
+                print(f"[Gemini] Attempt {attempt+1}, key #{self.current_key_index + 1}")
+                
                 model = genai.GenerativeModel(model_name)
                 
-                # Set timeout in generation config
+                # Simple config
                 generation_config = {
-                    "max_output_tokens": 2048,
+                    "max_output_tokens": 1024,
                     "temperature": 0.1,
                 }
                 
                 response = model.generate_content(
                     prompt,
-                    generation_config=generation_config,
-                    request_options={"timeout": timeout}
+                    generation_config=generation_config
                 )
                 
+                print(f"[Gemini] Success! Length: {len(response.text)}")
                 return response.text
                 
             except Exception as e:
                 error_msg = str(e).lower()
+                print(f"[Gemini] Error: {error_msg[:100]}")
                 
-                # Quota/rate limit error - rotate key
+                # Quota error - rotate
                 if "quota" in error_msg or "429" in error_msg or "rate limit" in error_msg:
-                    print(f"[WARNING] Key #{self.current_key_index + 1} quota exceeded")
-                    
                     if self.rotate_key():
-                        print(f"[INFO] Switched to key #{self.current_key_index + 1}")
                         time.sleep(0.5)
                         continue
                     else:
-                        raise Exception("All API keys exhausted")
-                
-                # Timeout error
-                elif "timeout" in error_msg:
-                    print(f"[ERROR] Gemini timeout after {timeout}s")
-                    raise TimeoutError(f"Gemini API timeout after {timeout} seconds")
-                    
+                        return "# Error: All API keys exhausted"
                 else:
-                    # Other error
-                    raise e
+                    # Other error - return error message
+                    return f"# Error: {error_msg[:100]}"
         
-        raise Exception("Failed after trying all API keys")
+        return "# Error: Failed after retries"
 
 
 # Global key manager instance

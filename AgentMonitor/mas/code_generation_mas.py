@@ -89,8 +89,9 @@ class CodeGenerationMAS:
             
             return output
         else:
-            # Direct execution
-            return agent.generate_response(task)
+            # Direct execution - RUN IN EXECUTOR TO AVOID BLOCKING
+            loop = asyncio.get_event_loop()
+            return await loop.run_in_executor(None, agent.generate_response, task)
 
 
 class Agent:
@@ -102,52 +103,37 @@ class Agent:
         self.llm = llm
     
     def generate_response(self, prompt: str) -> str:
-        """Generate response for a task - WITH TIMEOUT"""
+        """Generate response - BLOCKING SYNC FUNCTION"""
         try:
-            # SHORT, DIRECT PROMPT
+            # SHORT PROMPT
             if self.name == "Coder":
-                full_prompt = f"{prompt}\n\nReturn ONLY Python code, no explanations:"
+                full_prompt = f"{prompt}\n\nReturn only Python code:"
             else:
                 full_prompt = prompt
             
-            print(f"[{self.name}] Calling LLM...")
+            print(f"[{self.name}] Calling Gemini...")
+            start = __import__('time').time()
             
-            # Handle different LLM interfaces with TIMEOUT
+            # Call LLM (blocking)
             if callable(self.llm):
-                import signal
+                response = self.llm(full_prompt)
+                elapsed = __import__('time').time() - start
+                print(f"[{self.name}] Got response in {elapsed:.1f}s")
                 
-                def timeout_handler(signum, frame):
-                    raise TimeoutError("LLM call timed out after 30 seconds")
+                response_str = response if isinstance(response, str) else str(response)
                 
-                # Set 30 second timeout
-                signal.signal(signal.SIGALRM, timeout_handler)
-                signal.alarm(30)
+                # Extract code from markdown
+                if "```" in response_str:
+                    import re
+                    code_blocks = re.findall(r'```(?:python)?\s*(.*?)```', response_str, re.DOTALL)
+                    if code_blocks:
+                        response_str = code_blocks[0].strip()
+                        print(f"[{self.name}] Extracted code: {len(response_str)} chars")
                 
-                try:
-                    response = self.llm(full_prompt)
-                    signal.alarm(0)  # Cancel timeout
-                    
-                    response_str = response if isinstance(response, str) else str(response)
-                    
-                    # Extract code from markdown
-                    if "```" in response_str:
-                        import re
-                        code_blocks = re.findall(r'```(?:python)?\s*(.*?)```', response_str, re.DOTALL)
-                        if code_blocks:
-                            response_str = code_blocks[0].strip()
-                            print(f"[{self.name}] Extracted code: {len(response_str)} chars")
-                    
-                    return response_str
-                except TimeoutError:
-                    signal.alarm(0)
-                    return f"# Timeout: {self.name} took too long"
-                    
-            elif hasattr(self.llm, 'generate_content'):
-                response = self.llm.generate_content(full_prompt)
-                return response.text
+                return response_str
             else:
                 return f"# Error: Unknown LLM interface"
                 
         except Exception as e:
-            print(f"🚨 [{self.name}] Error: {str(e)[:100]}")
-            return f"# Error in {self.name}: {str(e)[:50]}"
+            print(f"🚨 [{self.name}] Error: {str(e)[:200]}")
+            return f"# Error in {self.name}"
