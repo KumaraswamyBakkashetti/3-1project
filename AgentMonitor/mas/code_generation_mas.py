@@ -44,44 +44,26 @@ class CodeGenerationMAS:
         
     async def run(self, task: str, monitor=None) -> str:
         """
-        Run the MAS pipeline on a task.
+        Run the MAS pipeline - SIMPLIFIED FOR SPEED
         
         Args:
-            task: Programming task (e.g., "Write a function to sort a list")
+            task: Programming task
             monitor: AgentMonitor instance (optional)
             
         Returns:
             Final code output
         """
-        # Step 1: Analyzer
-        analysis = await self._run_agent(
-            "Analyzer",
-            f"Analyze this programming task and break it down:\n{task}",
-            monitor
-        )
+        # SPEED OPTIMIZATION: Skip Analyzer and Tester, only use Coder
+        print(f"⚡ FAST MODE: Using Coder only (skipping Analyzer/Tester/Reviewer)")
         
-        # Step 2: Coder
+        # Direct to Coder with simple prompt
         code = await self._run_agent(
             "Coder",
-            f"Requirements: {analysis}\n\nWrite Python code to solve: {task}",
+            f"Write Python code: {task}",
             monitor
         )
         
-        # Step 3: Tester
-        tests = await self._run_agent(
-            "Tester",
-            f"Code:\n{code}\n\nWrite unit tests for this code.",
-            monitor
-        )
-        
-        # Step 4: Reviewer
-        final = await self._run_agent(
-            "Reviewer",
-            f"Code:\n{code}\n\nTests:\n{tests}\n\nReview and improve the code.",
-            monitor
-        )
-        
-        return final
+        return code
     
     async def _run_agent(self, agent_name: str, task: str, monitor=None) -> str:
         """Run single agent with optional monitoring"""
@@ -120,45 +102,52 @@ class Agent:
         self.llm = llm
     
     def generate_response(self, prompt: str) -> str:
-        """Generate response for a task"""
+        """Generate response for a task - WITH TIMEOUT"""
         try:
-            # Optimize prompts for code-only output (no explanations)
+            # SHORT, DIRECT PROMPT
             if self.name == "Coder":
-                full_prompt = f"You are a {self.role}. {prompt}\n\nRULE: Output must be PURE EXECUTABLE PYTHON CODE ONLY. No markdown, no explanations, no text before or after. Start directly with 'def' or 'import'."
-            elif self.name == "Reviewer":
-                full_prompt = f"You are a {self.role}. {prompt}\n\nRULE: Output must be PURE EXECUTABLE PYTHON CODE ONLY. No markdown, no explanations, no text before or after."
+                full_prompt = f"{prompt}\n\nReturn ONLY Python code, no explanations:"
             else:
-                full_prompt = f"You are a {self.role}. {prompt}"
+                full_prompt = prompt
             
-            # Handle different LLM interfaces
+            print(f"[{self.name}] Calling LLM...")
+            
+            # Handle different LLM interfaces with TIMEOUT
             if callable(self.llm):
-                # Function interface (like gemini_call)
-                response = self.llm(full_prompt)
-                response_str = response if isinstance(response, str) else str(response)
+                import signal
                 
-                # Extract code from markdown if present (Gemini often wraps in ```)
-                if "```" in response_str:
-                    import re
-                    # Find all code blocks
-                    code_blocks = re.findall(r'```(.*?)```', response_str, re.DOTALL)
-                    if code_blocks:
-                        # Take first code block and remove "python" keyword if present
-                        code = code_blocks[0].strip()
-                        if code.startswith('python'):
-                            code = code[6:].strip()  # Remove "python" + newline
-                        if code:  # Make sure we got something
-                            response_str = code
-                            print(f"[{self.name}] Extracted {len(code)} chars of code from markdown")
+                def timeout_handler(signum, frame):
+                    raise TimeoutError("LLM call timed out after 30 seconds")
                 
-                return response_str
+                # Set 30 second timeout
+                signal.signal(signal.SIGALRM, timeout_handler)
+                signal.alarm(30)
+                
+                try:
+                    response = self.llm(full_prompt)
+                    signal.alarm(0)  # Cancel timeout
+                    
+                    response_str = response if isinstance(response, str) else str(response)
+                    
+                    # Extract code from markdown
+                    if "```" in response_str:
+                        import re
+                        code_blocks = re.findall(r'```(?:python)?\s*(.*?)```', response_str, re.DOTALL)
+                        if code_blocks:
+                            response_str = code_blocks[0].strip()
+                            print(f"[{self.name}] Extracted code: {len(response_str)} chars")
+                    
+                    return response_str
+                except TimeoutError:
+                    signal.alarm(0)
+                    return f"# Timeout: {self.name} took too long"
+                    
             elif hasattr(self.llm, 'generate_content'):
-                # Model object interface (like Gemini model)
                 response = self.llm.generate_content(full_prompt)
                 return response.text
             else:
-                return f"Error: LLM has unknown interface"
+                return f"# Error: Unknown LLM interface"
                 
         except Exception as e:
-            error_msg = f"Error in {self.name}: {str(e)}"
-            print(f"🚨 {error_msg}")
-            return error_msg
+            print(f"🚨 [{self.name}] Error: {str(e)[:100]}")
+            return f"# Error in {self.name}: {str(e)[:50]}"
