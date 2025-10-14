@@ -122,13 +122,35 @@ class Agent:
     def generate_response(self, prompt: str) -> str:
         """Generate response for a task"""
         try:
-            full_prompt = f"You are a {self.role}. {prompt}"
+            # Optimize prompts for code-only output (no explanations)
+            if self.name == "Coder":
+                full_prompt = f"You are a {self.role}. {prompt}\n\nRULE: Output must be PURE EXECUTABLE PYTHON CODE ONLY. No markdown, no explanations, no text before or after. Start directly with 'def' or 'import'."
+            elif self.name == "Reviewer":
+                full_prompt = f"You are a {self.role}. {prompt}\n\nRULE: Output must be PURE EXECUTABLE PYTHON CODE ONLY. No markdown, no explanations, no text before or after."
+            else:
+                full_prompt = f"You are a {self.role}. {prompt}"
             
             # Handle different LLM interfaces
             if callable(self.llm):
-                # Function interface (like llama_call)
+                # Function interface (like gemini_call)
                 response = self.llm(full_prompt)
-                return response if isinstance(response, str) else str(response)
+                response_str = response if isinstance(response, str) else str(response)
+                
+                # Extract code from markdown if present (Gemini often wraps in ```)
+                if "```" in response_str:
+                    import re
+                    # Find all code blocks
+                    code_blocks = re.findall(r'```(.*?)```', response_str, re.DOTALL)
+                    if code_blocks:
+                        # Take first code block and remove "python" keyword if present
+                        code = code_blocks[0].strip()
+                        if code.startswith('python'):
+                            code = code[6:].strip()  # Remove "python" + newline
+                        if code:  # Make sure we got something
+                            response_str = code
+                            print(f"[{self.name}] Extracted {len(code)} chars of code from markdown")
+                
+                return response_str
             elif hasattr(self.llm, 'generate_content'):
                 # Model object interface (like Gemini model)
                 response = self.llm.generate_content(full_prompt)

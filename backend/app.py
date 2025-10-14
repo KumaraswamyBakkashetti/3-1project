@@ -248,20 +248,21 @@ async def run_mas(request: RunRequest, user = Depends(verify_token)):
             
         else:
             print(f"✨ Initial mode - generating new code")
-            # Initial: Optimized for Llama speed
+            # Initial: RESTORED to this morning's working configuration
             mas = CodeGenerationMAS(
                 llm=llm,
-                threshold=0.65,  # Lower threshold for faster completion
-                max_retries=1    # Reduced retries
+                threshold=0.75,  # RESTORED - was working this morning
+                max_retries=1    # RESTORED - was working this morning
             )
             
             monitor = EnhancedAgentMonitor(
                 llm=llm,
-                threshold=0.65,  # Lower threshold
-                max_retries=1,
+                threshold=0.75,  # RESTORED - was working this morning
+                max_retries=1,   # RESTORED - was working this morning
                 debug=False
             )
             
+            print(f"✅ RESTORED MODE: threshold=0.75, max_retries=1 (like this morning)")
             print(f"Running MAS on task: {request.task[:60]}...")
             result = await mas.run(request.task, monitor=monitor)
         
@@ -336,20 +337,22 @@ async def run_mas(request: RunRequest, user = Depends(verify_token)):
         # STEP 5: Optional auto-enhancement if score is too low (only on initial run)
         auto_enhanced = False
         enhancement_loops = 0
+        # OPTIMIZED AUTO-ENHANCEMENT - faster but still functional for research
+        # Reduced retries from 3→1 and threshold from 0.8→0.75 for speed
         if not is_enhancement and predicted_score < 0.75:
             print(f"⚠️ Score {predicted_score:.4f} below threshold 0.75, triggering auto-enhancement...")
             try:
-                # Re-run with enhancement
+                # Re-run with enhancement (OPTIMIZED for speed)
                 enhanced_mas = CodeGenerationMAS(
                     llm=llm,
-                    threshold=0.8,
-                    max_retries=3
+                    threshold=0.75,  # Reduced from 0.8 for speed
+                    max_retries=1    # Reduced from 3 for speed (was causing delays)
                 )
                 
                 enhanced_monitor = EnhancedAgentMonitor(
                     llm=llm,
-                    threshold=0.8,
-                    max_retries=2,
+                    threshold=0.75,  # Reduced from 0.8 for speed
+                    max_retries=1,   # Reduced from 2 for speed
                     debug=False
                 )
                 

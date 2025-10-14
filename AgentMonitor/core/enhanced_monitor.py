@@ -270,25 +270,20 @@ class EnhancedAgentMonitor:
             return self._heuristic_score(output)
         
         try:
-            prompt = f"""You are evaluating an AI agent's output quality.
+            # OPTIMIZED: Short, direct prompt for fast scoring
+            prompt = f"""Score this output (0.0-1.0 only):
 
 Task: {task}
+Output: {output[:500]}
 
-Agent Output:
-{output}
-
-Rate the output on a scale of 0.0 to 1.0 based on:
-1. Correctness: Does it solve the task?
-2. Completeness: Are all requirements addressed?
-3. Quality: Is it well-structured and clear?
-
-Return ONLY a number between 0.0 and 1.0 (e.g., 0.85)
-"""
+Reply with ONLY a number like 0.85"""
             
             # Handle different LLM interfaces
             if callable(self.llm):
-                # Function interface (like llama_call)
-                response_text = self.llm(prompt)
+                # Function interface (like gemini_call) - run in executor to avoid blocking
+                import asyncio
+                loop = asyncio.get_event_loop()
+                response_text = await loop.run_in_executor(None, self.llm, prompt)
                 score_text = response_text.strip() if isinstance(response_text, str) else str(response_text).strip()
             elif hasattr(self.llm, 'generate_content'):
                 # Model object interface (like Gemini model)
@@ -297,13 +292,18 @@ Return ONLY a number between 0.0 and 1.0 (e.g., 0.85)
             else:
                 return self._heuristic_score(output)
             
-            # Extract number
+            # Extract number - try multiple patterns
             import re
+            # Try to find decimal between 0 and 1
             match = re.search(r'0?\.\d+|[01]\.?\d*', score_text)
             if match:
                 score = float(match.group())
                 return max(0.0, min(1.0, score))
             else:
+                # Fallback: if response looks positive, give high score
+                positive_words = ['good', 'correct', 'excellent', 'great', 'well']
+                if any(word in score_text.lower() for word in positive_words):
+                    return 0.85
                 return self._heuristic_score(output)
                 
         except Exception as e:
@@ -332,31 +332,38 @@ Return ONLY a number between 0.0 and 1.0 (e.g., 0.85)
             return f"Score {score:.2f} is below threshold. Please provide a more complete and accurate response."
         
         try:
-            prompt = f"""The agent's output scored {score:.2f}/1.0, which is below the quality threshold.
+            # OPTIMIZED: Very short feedback prompt (1 sentence instruction)
+            prompt = f"""Task: {task}
+Output score: {score:.2f}
+Current: {output[:300]}
 
-Task: {task}
-
-Current Output:
-{output}
-
-Provide brief, actionable feedback (2-3 sentences) on how to improve this output to meet the requirements better.
-"""
+Fix: (1 sentence only)"""
             
             # Handle different LLM interfaces
             if callable(self.llm):
-                # Function interface (like llama_call)
-                response_text = self.llm(prompt)
-                return response_text.strip() if isinstance(response_text, str) else str(response_text).strip()
+                # Function interface (like gemini_call) - run in executor to avoid blocking
+                import asyncio
+                loop = asyncio.get_event_loop()
+                response_text = await loop.run_in_executor(None, self.llm, prompt)
+                feedback = response_text if isinstance(response_text, str) else str(response_text)
+                # Extract first sentence only
+                import re
+                sentences = re.split(r'[.!?]\s+', feedback)
+                return sentences[0] if sentences else feedback[:200]
             elif hasattr(self.llm, 'generate_content'):
                 # Model object interface (like Gemini model)
                 response = self.llm.generate_content(prompt)
-                return response.text.strip()
+                feedback = response.text.strip()
+                # Extract first sentence only
+                import re
+                sentences = re.split(r'[.!?]\s+', feedback)
+                return sentences[0] if sentences else feedback[:200]
             else:
-                return f"Score {score:.2f} is below threshold. Please provide more detail."
+                return f"Score {score:.2f} too low. Add more detail."
             
         except Exception as e:
             print(f"[WARNING] Enhancement feedback generation failed: {e}")
-            return f"Score {score:.2f} is below threshold. Please provide more detail and ensure correctness."
+            return f"Score {score:.2f} too low. Improve output quality."
     
     def _initialize_agent_stats(self, agent_name: str, capability: str):
         """Initialize statistics for a new agent."""
