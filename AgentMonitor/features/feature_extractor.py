@@ -120,7 +120,14 @@ Return ONLY a JSON object: {{"personal_score": <float>}}
 """
             
             try:
-                response = self.llm_judge.generate_content(judge_prompt).strip()
+                # Use provided llm_judge if available; accept callable or model-like
+                if self.llm_judge and callable(self.llm_judge):
+                    response = self.llm_judge(judge_prompt).strip()
+                elif self.llm_judge and hasattr(self.llm_judge, 'generate_content'):
+                    response = self.llm_judge.generate_content(judge_prompt).strip()
+                else:
+                    raise RuntimeError("No llm_judge available")
+
                 response = self._extract_json(response)
                 parsed = json.loads(response)
                 score = float(parsed.get("personal_score", 0.5))
@@ -174,7 +181,13 @@ Return ONLY a JSON object: {{"collective_score": <float>}}
 """
         
         try:
-            response = self.llm_judge.generate_content(judge_prompt).strip()
+            if self.llm_judge and callable(self.llm_judge):
+                response = self.llm_judge(judge_prompt).strip()
+            elif self.llm_judge and hasattr(self.llm_judge, 'generate_content'):
+                response = self.llm_judge.generate_content(judge_prompt).strip()
+            else:
+                raise RuntimeError("No llm_judge available")
+
             response = self._extract_json(response)
             parsed = json.loads(response)
             score = float(parsed.get("collective_score", 0.5))

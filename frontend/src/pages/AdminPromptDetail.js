@@ -147,89 +147,62 @@ function AdminPromptDetail() {
 
       {/* MAS Indicators */}
       <div className="section-card">
-        <h2>📊 MAS Indicators</h2>
+        <h2>📊 MAS Performance Indicators</h2>
         <div className="indicators-grid">
           <div className="indicator-card">
             <div className="indicator-header">
               <span className="indicator-icon">⭐</span>
-              <span className="indicator-label">Personal Score</span>
+              <span className="indicator-label">Avg Personal Score</span>
             </div>
-            <div className="indicator-values">
-              <div className="value-item">
-                <span className="value-label">Initial:</span>
-                <span 
-                  className="value-number"
-                  style={{ color: getScoreColor(run.features?.personal_score || 0) }}
-                >
-                  {(run.features?.personal_score || 0).toFixed(3)}
-                </span>
-              </div>
-              <div className="value-item">
-                <span className="value-label">Final:</span>
-                <span 
-                  className="value-number"
-                  style={{ color: getScoreColor(run.predicted_score || 0) }}
-                >
-                  {(run.predicted_score || 0).toFixed(3)}
-                </span>
-              </div>
+            <div className="indicator-value-single" style={{ color: getScoreColor(run.features?.avg_personal_score || 0) }}>
+              {(run.features?.avg_personal_score || 0).toFixed(3)}
             </div>
           </div>
 
           <div className="indicator-card">
             <div className="indicator-header">
-              <span className="indicator-icon">💎</span>
-              <span className="indicator-label">Clarity</span>
+              <span className="indicator-icon">📉</span>
+              <span className="indicator-label">Min Personal Score</span>
             </div>
             <div className="indicator-value-single">
-              {(run.features?.clarity || 0).toFixed(3)}
-            </div>
-          </div>
-
-          <div className="indicator-card">
-            <div className="indicator-header">
-              <span className="indicator-icon">✅</span>
-              <span className="indicator-label">Code Correctness</span>
-            </div>
-            <div className="indicator-value-single">
-              {(run.features?.code_correctness || 0).toFixed(3)}
-            </div>
-          </div>
-
-          <div className="indicator-card">
-            <div className="indicator-header">
-              <span className="indicator-icon">🧩</span>
-              <span className="indicator-label">Complexity</span>
-            </div>
-            <div className="indicator-value-single">
-              {(run.features?.complexity || 0).toFixed(3)}
-            </div>
-          </div>
-
-          <div className="indicator-card">
-            <div className="indicator-header">
-              <span className="indicator-icon">🔄</span>
-              <span className="indicator-label">Loops</span>
-            </div>
-            <div className="indicator-value-single">
-              {run.features?.loops || 0}
-            </div>
-          </div>
-
-          <div className="indicator-card">
-            <div className="indicator-header">
-              <span className="indicator-icon">⚡</span>
-              <span className="indicator-label">Latency</span>
-            </div>
-            <div className="indicator-value-single">
-              {(run.features?.latency || 0).toFixed(2)}s
+              {(run.features?.min_personal_score || 0).toFixed(3)}
             </div>
           </div>
 
           <div className="indicator-card">
             <div className="indicator-header">
               <span className="indicator-icon">🎯</span>
-              <span className="indicator-label">Tokens</span>
+              <span className="indicator-label">Collective Score</span>
+            </div>
+            <div className="indicator-value-single" style={{ color: getScoreColor(run.features?.collective_score || 0) }}>
+              {(run.features?.collective_score || 0).toFixed(3)}
+            </div>
+          </div>
+
+          <div className="indicator-card">
+            <div className="indicator-header">
+              <span className="indicator-icon">🔄</span>
+              <span className="indicator-label">Max Loops</span>
+            </div>
+            <div className="indicator-value-single">
+              {run.features?.max_loops || 0}
+            </div>
+          </div>
+
+          <div className="indicator-card">
+            <div className="indicator-header">
+              <span className="indicator-icon">⚡</span>
+              <span className="indicator-label">Total Latency</span>
+            </div>
+            <div className="indicator-value-single">
+              {(run.features?.total_latency || 0).toFixed(2)}s
+            </div>
+          </div>
+
+          <div className="indicator-card">
+            <div className="indicator-header">
+              <span className="indicator-icon">🎯</span>
+              <span className="indicator-label">Total Tokens</span>
             </div>
             <div className="indicator-value-single">
               {run.features?.total_token_usage || 0}
@@ -245,113 +218,132 @@ function AdminPromptDetail() {
               {run.features?.num_nodes || 0}
             </div>
           </div>
+
+          <div className="indicator-card">
+            <div className="indicator-header">
+              <span className="indicator-icon">🔗</span>
+              <span className="indicator-label">Agent Interactions</span>
+            </div>
+            <div className="indicator-value-single">
+              {run.features?.num_edges || 0}
+            </div>
+          </div>
+
+          <div className="indicator-card">
+            <div className="indicator-header">
+              <span className="indicator-icon">�</span>
+              <span className="indicator-label">Clustering Coefficient</span>
+            </div>
+            <div className="indicator-value-single">
+              {(run.features?.clustering_coefficient || 0).toFixed(3)}
+            </div>
+          </div>
+
+          <div className="indicator-card">
+            <div className="indicator-header">
+              <span className="indicator-icon">🔀</span>
+              <span className="indicator-label">Transitivity</span>
+            </div>
+            <div className="indicator-value-single">
+              {(run.features?.transitivity || 0).toFixed(3)}
+            </div>
+          </div>
+
+          <div className="indicator-card">
+            <div className="indicator-header">
+              <span className="indicator-icon">�</span>
+              <span className="indicator-label">Avg Degree Centrality</span>
+            </div>
+            <div className="indicator-value-single">
+              {(run.features?.avg_degree_centrality || 0).toFixed(3)}
+            </div>
+          </div>
+
+          <div className="indicator-card">
+            <div className="indicator-header">
+              <span className="indicator-icon">🔍</span>
+              <span className="indicator-label">PageRank Entropy</span>
+            </div>
+            <div className="indicator-value-single">
+              {(run.features?.pagerank_entropy || 0).toFixed(3)}
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Per-Agent Breakdown */}
-      {run.monitor_data && run.monitor_data.agent_stats && (
+      {run.monitor_data && run.monitor_data.agent_stats && Object.keys(run.monitor_data.agent_stats).length > 0 && (
         <div className="section-card">
-          <h2>👥 Per-Agent Iteration Details</h2>
+          <h2>👥 Agent-Level Enhancement Data</h2>
           <p className="section-description">
-            Detailed view of each agent's conversation history, showing initial and final outputs with personal scores
+            Detailed view of each agent's performance including scores, latencies, and enhancement loops
           </p>
           <div className="agents-breakdown">
             {Object.entries(run.monitor_data.agent_stats).map(([agentName, agentData]) => {
-              const conversations = agentData.conversations || [];
-              const firstConv = conversations[0] || {};
-              const lastConv = conversations[conversations.length - 1] || {};
+              const scores = agentData.scores || [];
+              const latencies = agentData.latencies || [];
+              const avgScore = scores.length > 0 ? (scores.reduce((a,b) => a+b, 0) / scores.length) : 0;
+              const avgLatency = latencies.length > 0 ? (latencies.reduce((a,b) => a+b, 0) / latencies.length) : 0;
               
               return (
                 <div key={agentName} className="agent-card">
                   <div className="agent-header">
                     <span className="agent-icon">
-                      {agentName === 'analyzer' ? '🔍' : 
-                       agentName === 'coder' ? '💻' : 
-                       agentName === 'tester' ? '🧪' : '👁️'}
+                      {agentName.toLowerCase().includes('analyzer') ? '🔍' : 
+                       agentName.toLowerCase().includes('coder') ? '💻' : 
+                       agentName.toLowerCase().includes('tester') ? '🧪' : 
+                       agentName.toLowerCase().includes('reviewer') ? '👁️' : '🤖'}
                     </span>
-                    <span className="agent-name">{agentName.charAt(0).toUpperCase() + agentName.slice(1)}</span>
-                    <span className="agent-attempts">{conversations.length} iteration{conversations.length > 1 ? 's' : ''}</span>
+                    <span className="agent-name">{agentName}</span>
+                    <span className="agent-attempts">
+                      {agentData.total_calls || 0} call{(agentData.total_calls || 0) !== 1 ? 's' : ''}
+                    </span>
                   </div>
 
-                  <div className="agent-comparison">
-                    {/* Initial Output */}
-                    <div className="agent-output-panel">
-                      <div className="panel-label">
-                        📝 Initial Output
-                        {firstConv.personal_score !== undefined && (
-                          <span className="score-badge" style={{ backgroundColor: getScoreColor(firstConv.personal_score) + '20', color: getScoreColor(firstConv.personal_score) }}>
-                            Score: {firstConv.personal_score.toFixed(3)}
-                          </span>
-                        )}
-                      </div>
-                      <pre className="agent-code">
-                        {firstConv.output || 'No output available'}
-                      </pre>
-                      {firstConv.latency !== undefined && (
-                        <div className="output-meta">⏱️ {firstConv.latency.toFixed(2)}s</div>
-                      )}
+                  <div className="agent-stats-grid">
+                    <div className="stat-item">
+                      <div className="stat-label">Capability</div>
+                      <div className="stat-value">{agentData.capability || 'N/A'}</div>
                     </div>
-
-                    {conversations.length > 1 && (
-                      <>
-                        <div className="comparison-arrow">→</div>
-                        
-                        {/* Final Output */}
-                        <div className="agent-output-panel final">
-                          <div className="panel-label">
-                            ✨ Final Output
-                            {lastConv.personal_score !== undefined && (
-                              <span className="score-badge" style={{ backgroundColor: getScoreColor(lastConv.personal_score) + '20', color: getScoreColor(lastConv.personal_score) }}>
-                                Score: {lastConv.personal_score.toFixed(3)}
-                              </span>
-                            )}
-                          </div>
-                          <pre className="agent-code highlighted">
-                            {lastConv.output || 'No output available'}
-                          </pre>
-                          {lastConv.latency !== undefined && (
-                            <div className="output-meta">⏱️ {lastConv.latency.toFixed(2)}s</div>
-                          )}
-                        </div>
-                      </>
-                    )}
+                    <div className="stat-item">
+                      <div className="stat-label">Enhancement Triggered</div>
+                      <div className="stat-value">{agentData.enhancement_triggered || 0}</div>
+                    </div>
+                    <div className="stat-item">
+                      <div className="stat-label">Avg Score</div>
+                      <div className="stat-value" style={{ color: getScoreColor(avgScore) }}>
+                        {avgScore.toFixed(3)}
+                      </div>
+                    </div>
+                    <div className="stat-item">
+                      <div className="stat-label">Scores</div>
+                      <div className="stat-value">
+                        {scores.length > 0 ? scores.map(s => s.toFixed(2)).join(', ') : 'None'}
+                      </div>
+                    </div>
+                    <div className="stat-item">
+                      <div className="stat-label">Avg Latency</div>
+                      <div className="stat-value">{avgLatency.toFixed(2)}s</div>
+                    </div>
+                    <div className="stat-item">
+                      <div className="stat-label">Token Usage</div>
+                      <div className="stat-value">{agentData.token_usage || 0}</div>
+                    </div>
                   </div>
 
                   {/* Score Progression */}
-                  {conversations.length > 1 && firstConv.personal_score !== undefined && lastConv.personal_score !== undefined && (
+                  {scores.length > 1 && (
                     <div className="score-progression">
-                      <span className="progression-label">Score Improvement:</span>
-                      <span className={`progression-value ${lastConv.personal_score > firstConv.personal_score ? 'positive' : 'neutral'}`}>
-                        {firstConv.personal_score.toFixed(3)} → {lastConv.personal_score.toFixed(3)}
-                        {lastConv.personal_score > firstConv.personal_score && (
+                      <span className="progression-label">Score Progression:</span>
+                      <span className={`progression-value ${scores[scores.length-1] > scores[0] ? 'positive' : 'neutral'}`}>
+                        {scores[0].toFixed(3)} → {scores[scores.length-1].toFixed(3)}
+                        {scores[scores.length-1] > scores[0] && (
                           <span className="improvement-badge">
-                            +{((lastConv.personal_score - firstConv.personal_score) * 100).toFixed(1)}%
+                            +{(((scores[scores.length-1] - scores[0]) / scores[0]) * 100).toFixed(1)}%
                           </span>
                         )}
                       </span>
                     </div>
-                  )}
-
-                  {/* All Iterations (if more than 2) */}
-                  {conversations.length > 2 && (
-                    <details className="all-iterations">
-                      <summary>View all {conversations.length} iterations</summary>
-                      <div className="iterations-list">
-                        {conversations.map((conv, idx) => (
-                          <div key={idx} className="iteration-item">
-                            <div className="iteration-header">
-                              <span className="iteration-number">Iteration {idx + 1}</span>
-                              {conv.personal_score !== undefined && (
-                                <span className="iteration-score" style={{ color: getScoreColor(conv.personal_score) }}>
-                                  Score: {conv.personal_score.toFixed(3)}
-                                </span>
-                              )}
-                            </div>
-                            <pre className="iteration-output">{conv.output}</pre>
-                          </div>
-                        ))}
-                      </div>
-                    </details>
                   )}
                 </div>
               );

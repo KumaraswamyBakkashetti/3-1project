@@ -109,6 +109,7 @@ class EnhancedAgentMonitor:
                 result = response.json()
                 return result.get('response', '').strip()
             except Exception as e:
+                # Return an informative string; scoring will fallback to heuristics
                 return f"Error calling Llama: {str(e)}"
         
         return llama_call
@@ -150,24 +151,45 @@ class EnhancedAgentMonitor:
         best_output = ""  # Initialize with empty string instead of None
         best_score = -1.0  # Start with -1 so any score (even 0) will be accepted
         enhanced = False
+        # Normalize capability/language
+        cap = (capability or '').lower()
+        language_hint = ''
+        if cap and cap not in ['auto', 'llama', 'any', '']:
+            language_hint = f"\n\nPlease write the code in {cap}."
         
         while attempts <= self.max_retries:
+            # Prepare task with language hint so LLM doesn't default to Python
+            # Also prepend a LANGUAGE directive to the very top of the prompt for stronger signal
+            lang_directive = ''
+            if language_hint:
+                # Extract language name from language_hint ("Please write the code in X.")
+                # and add a top-of-prompt directive
+                try:
+                    lang_name = cap
+                    if lang_name:
+                        lang_directive = f"LANGUAGE: {lang_name}\n\n"
+                except Exception:
+                    lang_directive = ''
+
+            task_to_run = f"{lang_directive}{task}{language_hint}"
+
             # Run agent
             start_time = time.time()
             
             try:
                 # Try different agent interfaces
+                # Try different agent interfaces, giving them the hint-ed task
                 if hasattr(agent, 'run'):
                     if asyncio.iscoroutinefunction(agent.run):
-                        output = await agent.run(task)
+                        output = await agent.run(task_to_run)
                     else:
-                        output = agent.run(task)
+                        output = agent.run(task_to_run)
                 elif hasattr(agent, 'generate'):
-                    output = agent.generate(task)
+                    output = agent.generate(task_to_run)
                 elif hasattr(agent, 'generate_response'):
-                    output = agent.generate_response(task)
+                    output = agent.generate_response(task_to_run)
                 elif callable(agent):
-                    output = agent(task)
+                    output = agent(task_to_run)
                 else:
                     raise ValueError(f"Agent {agent_name} has no run/generate method")
                     
@@ -213,13 +235,13 @@ class EnhancedAgentMonitor:
                     enhanced = True
                     attempts += 1
                     
-                    # Generate enhancement feedback
+                    # Generate enhancement feedback (pass capability so feedback keeps language)
                     feedback = await self._generate_enhancement_feedback(
-                        task, output_str, score
+                        task, output_str, score, capability=cap
                     )
-                    
-                    # Modify task with feedback for next attempt
-                    task = f"{task}\n\nPrevious attempt scored {score:.2f}/1.0. Feedback:\n{feedback}\n\nPlease improve the response."
+
+                    # Modify task with feedback for next attempt and re-append language hint
+                    task = f"{task}\n\nPrevious attempt scored {score:.2f}/1.0. Feedback:\n{feedback}\n\nPlease improve the response.{language_hint}"
                     
                     if self.debug:
                         print(f"[{agent_name}] ⚠️ Score {score:.2f} < {self.threshold:.2f} - Retry {attempts}/{self.max_retries}")
@@ -326,6 +348,7 @@ Reply with ONLY a number like 0.85"""
         task: str,
         output: str,
         score: float
+        , capability: str = ''
     ) -> str:
         """Generate feedback for enhancement."""
         if not self.llm:
@@ -333,11 +356,13 @@ Reply with ONLY a number like 0.85"""
         
         try:
             # OPTIMIZED: Very short feedback prompt (1 sentence instruction)
+            cap = (capability or '').lower() if capability is not None else ''
+            lang_hint = f"\n\nPlease keep the improved code in {cap}." if cap and cap not in ['auto', 'llama', 'any', ''] else ''
             prompt = f"""Task: {task}
 Output score: {score:.2f}
 Current: {output[:300]}
 
-Fix: (1 sentence only)"""
+Fix: (1 sentence only){lang_hint}"""
             
             # Handle different LLM interfaces
             if callable(self.llm):

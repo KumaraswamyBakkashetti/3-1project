@@ -22,8 +22,14 @@ export const login = async (username, password) => {
   return response.data;
 };
 
-export const runMAS = async (task, code = '') => {
-  const response = await api.post('/run_mas', { task, code });
+export const runMAS = async (task, code = '', language = 'auto', use_full_mas = false) => {
+  const response = await api.post('/run-mas', { task, code, language, use_full_mas });
+  return response.data;
+};
+
+// New: start a run and return initial code immediately; enhancement runs in background
+export const runMASStart = async (task, language = 'auto', use_full_mas = false) => {
+  const response = await api.post('/run-mas-start', { task, language, use_full_mas });
   return response.data;
 };
 

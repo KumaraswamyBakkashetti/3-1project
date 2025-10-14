@@ -13,7 +13,12 @@ import numpy as np
 from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from scipy.stats import spearmanr
-import xgboost as xgb
+try:
+    import xgboost as xgb
+except Exception:
+    xgb = None
+    # xgboost is optional for training/prediction. If you need full predictor
+    # capabilities, install xgboost: pip install xgboost
 
 
 class MASPredictor:
@@ -37,7 +42,9 @@ class MASPredictor:
             model_path: Path to save/load model
         """
         self.model_path = model_path
-        self.model: Optional[xgb.XGBRegressor] = None
+        # If xgboost is unavailable, model will remain None and predict/train
+        # operations will raise informative errors.
+        self.model: Optional[Any] = None
         self.feature_importance_: Optional[pd.DataFrame] = None
         self.training_metrics_: Optional[Dict[str, float]] = None
         

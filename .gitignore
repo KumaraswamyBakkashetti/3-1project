@@ -48,6 +48,27 @@ Thumbs.db
 # Logs
 *.log
 logs/
+
+# Test and verification scripts (temporary)
+quick_*.py
+verify_*.py
+test_temp_*.py
+
+# Temporary documentation (keep only DOCUMENTATION.md and README.md)
+FEATURES_*.md
+FIXES_*.md
+FULL_MAS_*.md
+HOW_TO_*.md
+QUICK_*.md
+
+# Node modules
+node_modules/
+package-lock.json
+
+# Build outputs
+build/
+dist/
+*.pyc
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

@@ -62,19 +62,23 @@ class GeminiKeyManager:
         return False
     
     def call_gemini(self, prompt, model_name="gemini-2.5-flash", timeout=20):
-        """Call Gemini with timeout"""
+        """Call Gemini with timeout and speed optimization"""
         max_retries = min(3, len(self.api_keys))
         
         for attempt in range(max_retries):
             try:
-                print(f"[Gemini] Attempt {attempt+1}, key #{self.current_key_index + 1}")
+                # Use faster model (gemini-1.5-flash is faster than 2.5-flash)
+                if "gemini-2.5" in model_name:
+                    model_name = "gemini-1.5-flash"  # Use faster version
                 
                 model = genai.GenerativeModel(model_name)
                 
-                # Simple config
+                # OPTIMIZED for speed: Lower tokens, higher temperature for faster generation
                 generation_config = {
-                    "max_output_tokens": 1024,
-                    "temperature": 0.1,
+                    "max_output_tokens": 512,      # Reduced from 1024
+                    "temperature": 0.3,            # Slightly higher for faster generation
+                    "top_p": 0.8,                  # Reduce sampling space
+                    "top_k": 20,                   # Limit token selection
                 }
                 
                 response = model.generate_content(
@@ -82,12 +86,10 @@ class GeminiKeyManager:
                     generation_config=generation_config
                 )
                 
-                print(f"[Gemini] Success! Length: {len(response.text)}")
                 return response.text
                 
             except Exception as e:
                 error_msg = str(e).lower()
-                print(f"[Gemini] Error: {error_msg[:100]}")
                 
                 # Quota error - rotate
                 if "quota" in error_msg or "429" in error_msg or "rate limit" in error_msg:

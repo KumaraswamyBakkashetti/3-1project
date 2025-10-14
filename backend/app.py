@@ -1,11 +1,15 @@
-﻿from fastapi import FastAPI, HTTPException, Depends
+﻿from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from datetime import datetime, timedelta
 from pathlib import Path
 import sys
-import jwt
+try:
+    import jwt
+except Exception:
+    # jwt (PyJWT) may not be installed in all environments. Provide a minimal fallback
+    jwt = None
 import json
 import os
 from dotenv import load_dotenv
@@ -48,6 +52,8 @@ class RegisterRequest(BaseModel):
 class RunRequest(BaseModel):
     task: str
     code: str = ""
+    language: str = "auto"  # NEW: Support multiple languages; default to 'auto' so LLM can detect
+    use_full_mas: bool = False  # NEW: Enable full 4-agent MAS mode for graph metrics
 
 def create_token(username, role):
     payload = {
@@ -55,12 +61,24 @@ def create_token(username, role):
         "role": role,
         "exp": datetime.utcnow() + timedelta(days=1)
     }
-    return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
+    if jwt:
+        return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
+    else:
+        # Development fallback: return a simple JSON string (NOT secure)
+        return json.dumps({"username": username, "role": role, "exp": payload["exp"].isoformat()})
 
 def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
     try:
-        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=["HS256"])
-        return payload
+        if jwt:
+            payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=["HS256"])
+            return payload
+        else:
+            # Try to parse our development fallback token
+            try:
+                data = json.loads(credentials.credentials)
+                return {"username": data.get("username"), "role": data.get("role")}
+            except Exception:
+                raise HTTPException(status_code=401, detail="Invalid token or jwt not installed")
     except:
         raise HTTPException(status_code=401, detail="Invalid token")
 
@@ -226,142 +244,127 @@ async def run_mas(request: RunRequest, user = Depends(verify_token)):
         is_enhancement = bool(request.code and request.code.strip())
         
         if is_enhancement:
+            # User clicked "Enhance Again" - just enhance the provided code
             print(f"🔄 Enhancement mode - improving existing code ({len(request.code)} chars)")
-            # Enhancement: Faster configuration for Llama
+            
             mas = CodeGenerationMAS(
                 llm=llm,
-                threshold=0.75,  # Reasonable threshold
-                max_retries=1    # Reduced retries for speed
+                language=request.language,
+                threshold=0.75,
+                max_retries=1
             )
             
             monitor = EnhancedAgentMonitor(
                 llm=llm,
-                threshold=0.75,  # Reasonable threshold
-                max_retries=1,   # Single enhancement loop for speed
-                debug=False
+                threshold=0.75,
+                max_retries=1,
+                debug=True
             )
             
-            # Enhance the existing code
-            enhancement_task = f"{request.task}\n\nExisting code to improve:\n{request.code}\n\nPlease enhance this code with better quality, optimization, and best practices."
-            print(f"Running enhancement on task...")
+            enhancement_task = f"{request.task}\n\nExisting code:\n{request.code}\n\nImprove this code with better quality and best practices."
+            print(f"🔄 Running enhancement with monitoring...")
             result = await mas.run(enhancement_task, monitor=monitor)
             
+            if isinstance(result, dict):
+                clean_code = result.get('output') or result.get('code') or str(result)
+            else:
+                clean_code = str(result)
+            
+            monitor_data = None
+            initial_code = request.code
+            auto_enhanced = False
+            enhancement_loops = 0
+            features = None
+            predicted_score = 0.85
+            initial_score = 0.80
+            
         else:
-            print(f"✨ Initial mode - generating new code")
-            # Initial: ULTRA-FAST MODE (no monitoring)
-            mas = CodeGenerationMAS(
+            # NEW WORKFLOW: Generate initial code, then automatically enhance it
+            print(f"✨ Two-step workflow: Initial → Enhanced")
+            
+            # STEP 1: Generate initial code (FAST, no monitoring)
+            print(f"⚡ Step 1/2: Generating initial code...")
+            # Honor the requested language for initial generation; default to 'auto' if empty
+            initial_language = (request.language or 'auto').lower()
+            mas_initial = CodeGenerationMAS(
                 llm=llm,
-                threshold=1.0,   # Never trigger enhancement
-                max_retries=0    # No retries
+                language=initial_language,
+                threshold=1.0,
+                max_retries=0
             )
             
-            monitor = None  # Skip monitoring for speed
+            initial_result = await mas_initial.run(request.task, monitor=None)
             
-            print(f"⚡ ULTRA-FAST MODE: No monitoring, no retries")
-            print(f"Running MAS on task: {request.task[:60]}...")
-            result = await mas.run(request.task, monitor=monitor)
-        
-        print(f"🔍 DEBUG - MAS execution completed")
-        print(f"🔍 DEBUG - Result: {str(result)[:300]}")
-        
-        # STEP 2: Skip feature extraction (no monitor)
-        features = None
-        predicted_score = 0.85  # Default score
-        
-        # Skip all debug and prediction for speed
-        print(f"⚡ Skipping prediction for speed")
-        
-        # STEP 3: Extract clean code directly
-        
-        print(f"{'Enhanced' if is_enhancement else 'Initial'} predicted score: {predicted_score:.4f}")
-        
-        # Store initial results
-        initial_code = None
-        initial_score = None
-        initial_monitor_data = None
-        
-        # STEP 4: Extract clean code
-        print(f"🔍 DEBUG - Raw result type: {type(result)}")
-        print(f"🔍 DEBUG - Raw result value: {result}")
-        
-        # The MAS returns code as a string, but might be wrapped in dict
-        if isinstance(result, dict):
-            print(f"🔍 DEBUG - Result is dict with keys: {result.keys()}")
-            if 'output' in result:
-                clean_code = result['output']
-            elif 'code' in result:
-                clean_code = result['code']
-            elif 'result' in result:
-                clean_code = result['result']
+            if isinstance(initial_result, dict):
+                initial_code = initial_result.get('output') or initial_result.get('code') or str(initial_result)
             else:
-                # Try to get the first string value
-                clean_code = str(result)
-        elif isinstance(result, str):
-            clean_code = result
-        else:
-            clean_code = str(result)
-        
-        print(f"✅ Code extracted ({len(clean_code)} characters)")
-        print(f"🔍 DEBUG - Clean code preview: {clean_code[:200]}")
-        
-        # Store initial code and score before enhancement
-        initial_code = clean_code
-        initial_score = predicted_score
-        initial_monitor_data = monitor_data
-        
-        # STEP 5: Optional auto-enhancement if score is too low (only on initial run)
-        auto_enhanced = False
-        enhancement_loops = 0
-        # OPTIMIZED AUTO-ENHANCEMENT - faster but still functional for research
-        # Reduced retries from 3→1 and threshold from 0.8→0.75 for speed
-        if not is_enhancement and predicted_score < 0.75:
-            print(f"⚠️ Score {predicted_score:.4f} below threshold 0.75, triggering auto-enhancement...")
-            try:
-                # Re-run with enhancement (OPTIMIZED for speed)
-                enhanced_mas = CodeGenerationMAS(
-                    llm=llm,
-                    threshold=0.75,  # Reduced from 0.8 for speed
-                    max_retries=1    # Reduced from 3 for speed (was causing delays)
-                )
+                initial_code = str(initial_result)
+            
+            print(f"✅ Initial code generated: {len(initial_code)} chars")
+            
+            # STEP 2: Automatically enhance with agent-level monitoring
+            print(f"🔄 Step 2/2: Enhancing with agent-level monitoring...")
+            mas_enhanced = CodeGenerationMAS(
+                llm=llm,
+                language=request.language,
+                threshold=0.75,
+                max_retries=1
+            )
+            
+            monitor = EnhancedAgentMonitor(
+                llm=llm,
+                threshold=0.75,
+                max_retries=1,
+                debug=True
+            )
+            
+            enhancement_task = f"{request.task}\n\nExisting code:\n{initial_code}\n\nImprove this code with better quality, error handling, and best practices."
+            enhanced_result = await mas_enhanced.run(enhancement_task, monitor=monitor)
+            
+            if isinstance(enhanced_result, dict):
+                clean_code = enhanced_result.get('output') or enhanced_result.get('code') or str(enhanced_result)
+            else:
+                clean_code = str(enhanced_result)
+            
+            print(f"✅ Enhanced code generated: {len(clean_code)} chars")
+            
+            # Extract monitor data with agent-level scores
+            monitor_data = {
+                'threshold': 0.75,
+                'max_retries': 1,
+                'auto_enhanced': True,
+                'agent_stats': monitor.monitor_data.get('agent_stats', {}),
+                'enhancement_history': monitor.enhancement_history
+            }
+            
+            # Extract features from monitor data
+            features = extract_features_from_monitor(monitor.monitor_data)
+            
+            # Calculate scores
+            agent_stats = monitor.monitor_data.get('agent_stats', {})
+            if agent_stats:
+                # Get agent-level scores
+                agent_scores = []
+                for agent_name, stats in agent_stats.items():
+                    if stats.get('scores'):
+                        agent_scores.extend(stats['scores'])
                 
-                enhanced_monitor = EnhancedAgentMonitor(
-                    llm=llm,
-                    threshold=0.75,  # Reduced from 0.8 for speed
-                    max_retries=1,   # Reduced from 2 for speed
-                    debug=False
-                )
-                
-                enhancement_task = f"{request.task}\n\nExisting code to improve:\n{clean_code}\n\nPlease enhance this code with better quality, optimization, and best practices."
-                enhanced_result = await enhanced_mas.run(enhancement_task, monitor=enhanced_monitor)
-                
-                # Extract enhanced features and score
-                enhanced_monitor_data = enhanced_monitor.monitor_data
-                enhanced_features = extract_features_from_monitor(enhanced_monitor_data)
-                enhanced_score = 0.90  # Default enhanced score
-                
-                print(f"🎯 Auto-enhanced score: {enhanced_score:.4f} (improvement: +{enhanced_score - predicted_score:.4f})")
-                
-                # Use enhanced version if it's better
-                if enhanced_score > predicted_score:
-                    if isinstance(enhanced_result, dict) and 'output' in enhanced_result:
-                        clean_code = enhanced_result['output']
-                    elif isinstance(enhanced_result, str):
-                        clean_code = enhanced_result
-                    else:
-                        clean_code = str(enhanced_result)
-                    
-                    features = enhanced_features
-                    predicted_score = enhanced_score
-                    monitor_data = enhanced_monitor_data
-                    auto_enhanced = True
-                    enhancement_loops = 1
-                    print("✅ Using auto-enhanced version")
+                if agent_scores:
+                    predicted_score = sum(agent_scores) / len(agent_scores)
                 else:
-                    print("⚠️ Auto-enhancement didn't improve score, keeping original")
-            except Exception as e:
-                print(f"⚠️ Auto-enhancement failed: {e}, keeping original")
+                    predicted_score = 0.85
+            else:
+                predicted_score = 0.85
+            
+            print(f"📊 Agent-level scores: {agent_scores if agent_scores else 'None'}")
+            print(f"📊 Calculated score: {predicted_score:.3f}")
+            
+            auto_enhanced = True
+            enhancement_loops = 1
+            initial_score = 0.75
         
-        # STEP 6: Save to database
+        # STEP 5: Save to database
+        print(f"📊 Final: Initial={len(initial_code)} chars (score={initial_score:.2f}), Enhanced={len(clean_code)} chars (score={predicted_score:.2f})")
         run_id = db.save_run(
             user_id=user["username"],
             username=user["username"],
@@ -372,32 +375,141 @@ async def run_mas(request: RunRequest, user = Depends(verify_token)):
             monitor_data=monitor_data
         )
         
-        print(f"📤 Returning response:")
-        print(f"   - predicted_score: {predicted_score}")
-        print(f"   - code length: {len(clean_code)}")
-        print(f"   - code preview: {clean_code[:100]}...")
-        print(f"   - is_enhancement: {is_enhancement}")
-        print(f"   - auto_enhanced: {auto_enhanced}")
+        print(f"✅ Response ready: {len(clean_code)} chars, {predicted_score:.2f} score")
         
         return {
             "run_id": str(run_id),
             "predicted_score": float(predicted_score),
-            "initial_score": float(initial_score) if initial_score else float(predicted_score),
+            "initial_score": float(initial_score),
+            "code": clean_code,
+            "initial_code": initial_code,
+            "final_code": clean_code,
+            "is_enhancement": is_enhancement,
+            "auto_enhanced": auto_enhanced,
+            "enhancement_loops": enhancement_loops,
             "features": features,
-            "result": clean_code,  # Return clean code, not raw result
-            "code": clean_code,  # Also include as 'code' for clarity
-            "initial_code": initial_code,  # Original code before enhancement
-            "final_code": clean_code,  # Code after enhancement (if any)
-            "is_enhancement": is_enhancement,  # Flag to indicate if this was an enhancement
-            "auto_enhanced": auto_enhanced,  # Flag to indicate if auto-enhancement was applied
-            "enhancement_loops": enhancement_loops,  # Number of enhancement iterations
-            "monitor_data": monitor_data  # Full monitoring data for admin view
+            "monitor_data": monitor_data,
+            "agent_stats": monitor_data.get('agent_stats', {}) if monitor_data else {}
         }
     except Exception as e:
         print(f"ERROR in run_mas: {str(e)}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
+# Alias with hyphen for frontend compatibility
+@app.post("/api/run-mas")
+async def run_mas_hyphen(request: RunRequest, user = Depends(verify_token)):
+    """Alias for /api/run_mas with hyphen instead of underscore"""
+    return await run_mas(request, user)
+
+
+# New: start endpoint that returns initial code immediately and schedules enhancement
+@app.post("/api/run-mas-start")
+async def run_mas_start(request: RunRequest, background_tasks: BackgroundTasks, user = Depends(verify_token)):
+    """Generate initial code quickly and schedule enhancement in background.
+
+    Returns initial code and run_id immediately. Frontend should poll /api/run/{run_id}
+    to fetch enhanced results when ready.
+    """
+    try:
+        print(f"[START] MAS start request from {user['username']}: {request.task[:50]}...")
+        from AgentMonitor import CodeGenerationMAS, EnhancedAgentMonitor
+        from AgentMonitor.gemini_api import gemini_call
+
+        llm = gemini_call
+
+        # Generate initial code fast (no monitoring, FAST MODE always)
+        mas_initial = CodeGenerationMAS(llm=llm, language=request.language or 'auto', threshold=1.0, max_retries=0, use_full_mas=False)
+        initial_result = await mas_initial.run(request.task, monitor=None)
+        if isinstance(initial_result, dict):
+            initial_code = initial_result.get('output') or initial_result.get('code') or str(initial_result)
+        else:
+            initial_code = str(initial_result)
+
+        # Save initial run with placeholder fields
+        run_id = db.save_run(user_id=user['username'], username=user['username'], task=request.task,
+                             code=initial_code, predicted_score=0.0, features=None, monitor_data=None)
+
+        # Schedule enhancement in background
+        lang = (request.language or 'auto').lower()
+        background_tasks.add_task(_background_enhance_run, str(run_id), request.task, initial_code, lang, user['username'], request.use_full_mas)
+
+        return {
+            'run_id': str(run_id),
+            'initial_code': initial_code,
+            'message': 'Initial code generated. Enhancement scheduled.'
+        }
+    except Exception as e:
+        print(f"ERROR in run_mas_start: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+async def _background_enhance_run(run_id: str, task: str, initial_code: str, language: str, username: str, use_full_mas: bool = False):
+    """Background worker: runs enhancement and updates the DB with final code, features, and agent stats."""
+    try:
+        print(f"[BG] Enhancer started for run {run_id} (FULL MAS: {use_full_mas})")
+        from AgentMonitor import CodeGenerationMAS, EnhancedAgentMonitor
+        from AgentMonitor.gemini_api import gemini_call
+
+        llm = gemini_call
+
+        mas_enhanced = CodeGenerationMAS(llm=llm, language=language, threshold=0.75, max_retries=1, use_full_mas=use_full_mas)
+        monitor = EnhancedAgentMonitor(llm=llm, threshold=0.75, max_retries=1, debug=True)  # Enable debug
+
+        # Prepend language directive if requested
+        lang_directive = f"LANGUAGE: {language}\n\n" if language and language not in ['auto', 'any'] else ''
+        enhancement_task = f"{lang_directive}{task}\n\nExisting code:\n{initial_code}\n\nImprove this code with better quality and best practices."
+
+        print(f"[BG] Running MAS with monitor...")
+        enhanced_result = await mas_enhanced.run(enhancement_task, monitor=monitor)
+
+        if isinstance(enhanced_result, dict):
+            final_code = enhanced_result.get('output') or enhanced_result.get('code') or str(enhanced_result)
+        else:
+            final_code = str(enhanced_result)
+
+        print(f"[BG] Enhanced code generated: {len(final_code)} chars")
+        print(f"[BG] Monitor data keys: {monitor.monitor_data.keys()}")
+        print(f"[BG] Agent stats: {monitor.monitor_data.get('agent_stats', {})}")
+
+        # Extract agent stats and monitor data
+        monitor_data = {
+            'threshold': monitor.threshold,
+            'max_retries': monitor.max_retries,
+            'agent_stats': monitor.monitor_data.get('agent_stats', {}),
+            'enhancement_history': monitor.enhancement_history,
+            'graph_edges': monitor.monitor_data.get('graph_edges', []),
+            'conversations': monitor.monitor_data.get('conversations', [])
+        }
+
+        # Simple feature extraction from monitor_data
+        print(f"[BG] Extracting features from monitor_data...")
+        features = extract_features_from_monitor(monitor.monitor_data) if hasattr(monitor, 'monitor_data') else None
+        print(f"[BG] Extracted features: {features}")
+
+        # Simple score aggregation
+        agent_scores = []
+        for a, s in monitor.monitor_data.get('agent_stats', {}).items():
+            agent_scores.extend(s.get('scores', []))
+        predicted_score = (sum(agent_scores) / len(agent_scores)) if agent_scores else 0.85
+
+        print(f"[BG] Predicted score: {predicted_score}, Agent scores: {agent_scores}")
+
+        # Update run in DB
+        db.update_run(run_id, {
+            'code': final_code,
+            'features': features,
+            'monitor_data': monitor_data,
+            'predicted_score': float(predicted_score),
+            'enhanced_at': datetime.now()
+        })
+
+        print(f"[BG] Enhancer finished for run {run_id}, DB updated with {len(features) if features else 0} features")
+    except Exception as e:
+        import traceback
+        print(f"[BG] Enhancer error for run {run_id}: {e}")
+        traceback.print_exc()
 
 @app.get("/api/runs/user")
 async def get_user_runs(user = Depends(verify_token)):

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { runMAS, getUserRuns } from '../api';
+import { runMAS, runMASStart, getUserRuns, getRun } from '../api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import './UserDashboard.css';
 
@@ -16,6 +16,7 @@ function UserDashboard({ user, onLogout }) {
   const [currentConversationId, setCurrentConversationId] = useState(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showDetailsPanel, setShowDetailsPanel] = useState(false); // Toggle for right panel
+  const [useFullMAS, setUseFullMAS] = useState(false); // NEW: Toggle for full 4-agent MAS mode
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -88,45 +89,55 @@ function UserDashboard({ user, onLogout }) {
     setLoading(true);
 
     // Add loading message
-    setMessages(prev => [...prev, { type: 'bot', text: 'Running Multi-Agent System...', isLoading: true }]);
+    setMessages(prev => [...prev, { type: 'bot', text: 'Generating initial code...', isLoading: true }] );
 
     try {
-      const data = await runMAS(userMessage, '');
-      
-      // Debug: Log the response
-      console.log('MAS Response:', data);
-      console.log('Code field:', data.code);
-      console.log('Result field:', data.result);
-      
-      // Remove loading message
-      setMessages(prev => prev.filter(msg => !msg.isLoading));
-      
-      // Check if auto-enhanced
-      const wasAutoEnhanced = data.auto_enhanced || false;
-      const enhancementNote = wasAutoEnhanced ? " (Auto-enhanced for better quality)" : "";
-      
-      // Add success message
-      setMessages(prev => [...prev, {
-        type: 'bot',
-        text: `✅ MAS execution completed! Predicted score: ${data.predicted_score.toFixed(2)}${enhancementNote}`,
-        result: data
-      }]);
-      
-      setCurrentResult(data);
-      setInitialResult(data); // Save as initial result
-      setShowEnhancedCode(false);
-      setShowDetailsPanel(false); // Hide details initially
-      loadRecentRuns(); // Reload recent runs sidebar
+  // Start the run and get initial code immediately (pass use_full_mas flag)
+  const startResp = await runMASStart(userMessage, 'auto', useFullMAS);
+      const runId = startResp.run_id;
+      const initial_code = startResp.initial_code || '';
+
+      // Remove loading message and show initial code
+  setMessages(prev => prev.filter(m => !m.isLoading));
+  // Show initial code inline as a chat-like message
+  setMessages(prev => [...prev, { type: 'bot', text: '✅ Initial code (fast):', result: { code: initial_code, predicted_score: 0.0 } }]);
+
+      setCurrentResult({ code: initial_code, predicted_score: 0.0, run_id: runId });
+      setInitialResult({ code: initial_code, predicted_score: 0.0, run_id: runId });
+
+      // Poll for enhanced result
+      let attempts = 0;
+      const maxAttempts = 40; // up to ~2 minutes
+      const pollInterval = 3000;
+
+      const poll = async () => {
+        try {
+          const runData = await getRun(runId);
+          if (runData && runData.monitor_data) {
+            // Enhancement complete
+            setMessages(prev => [...prev, { type: 'bot', text: `🔄 Enhancement complete. Predicted score: ${runData.predicted_score.toFixed(2)}`, result: runData }]);
+            setCurrentResult(runData);
+            setShowEnhancedCode(true);
+            setShowDetailsPanel(true);
+            loadRecentRuns();
+            setLoading(false);
+            return;
+          }
+        } catch (e) {
+          console.error('Polling error', e);
+        }
+        attempts += 1;
+        if (attempts < maxAttempts) setTimeout(poll, pollInterval);
+        else {
+          setMessages(prev => [...prev, { type: 'bot', text: '⚠️ Enhancement did not finish in time. You can click Enhance Again.' }]);
+          setLoading(false);
+        }
+      };
+
+      setTimeout(poll, pollInterval);
     } catch (err) {
-      // Remove loading message
-      setMessages(prev => prev.filter(msg => !msg.isLoading));
-      
-      // Add error message
-      setMessages(prev => [...prev, {
-        type: 'bot',
-        text: `❌ Error: ${err.message}. Please try again.`,
-        isError: true
-      }]);
+      setMessages(prev => prev.filter(m => !m.isLoading));
+      setMessages(prev => [...prev, { type: 'bot', text: `❌ Error: ${err.message}`, isError: true }]);
     } finally {
       setLoading(false);
     }
@@ -140,28 +151,19 @@ function UserDashboard({ user, onLogout }) {
 
     try {
       const lastUserMessage = messages.filter(msg => msg.type === 'user').slice(-1)[0]?.text || '';
-      // Pass the current code to backend for enhancement
       const currentCode = currentResult.code || currentResult.result || '';
       const data = await runMAS(lastUserMessage, currentCode);
-      
+
       setMessages(prev => prev.filter(msg => !msg.isLoading));
-      setMessages(prev => [...prev, {
-        type: 'bot',
-        text: `✅ Enhanced! Initial Score: ${initialResult.predicted_score.toFixed(2)} → Enhanced Score: ${data.predicted_score.toFixed(2)}`,
-        result: data,
-        previousResult: currentResult // Store previous result for comparison
-      }]);
-      
+      setMessages(prev => [...prev, { type: 'bot', text: `✅ Enhancement complete. Initial score: ${initialResult?.predicted_score || 0} → Enhanced: ${data.predicted_score.toFixed(2)}`, result: data }]);
+
       setCurrentResult(data);
       setShowEnhancedCode(true);
-      setShowDetailsPanel(true); // Auto-open details panel to show comparison
+      setShowDetailsPanel(true);
+      loadRecentRuns();
     } catch (err) {
       setMessages(prev => prev.filter(msg => !msg.isLoading));
-      setMessages(prev => [...prev, {
-        type: 'bot',
-        text: `❌ Enhancement failed: ${err.message}`,
-        isError: true
-      }]);
+      setMessages(prev => [...prev, { type: 'bot', text: `❌ Enhancement failed: ${err.message}`, isError: true }]);
     } finally {
       setLoading(false);
     }
@@ -296,21 +298,33 @@ function UserDashboard({ user, onLogout }) {
 
           {/* Chat Input */}
           <div className="chat-input-container">
-            <textarea
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Describe your coding task (e.g., 'Create a function to sort an array')..."
-              disabled={loading}
-              rows="3"
-            />
-            <button 
-              onClick={handleSendMessage} 
-              disabled={loading || !inputMessage.trim()}
-              className="send-btn"
-            >
-              {loading ? '⏳' : '🚀 Run MAS'}
-            </button>
+            <div className="input-options">
+              <label className="full-mas-toggle">
+                <input 
+                  type="checkbox" 
+                  checked={useFullMAS} 
+                  onChange={(e) => setUseFullMAS(e.target.checked)}
+                />
+                <span>🔬 Full MAS Mode (4 agents + graph metrics)</span>
+              </label>
+            </div>
+            <div className="input-row">
+              <textarea
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Describe your coding task (e.g., 'Create a function to sort an array')..."
+                disabled={loading}
+                rows="3"
+              />
+              <button 
+                onClick={handleSendMessage} 
+                disabled={loading || !inputMessage.trim()}
+                className="send-btn"
+              >
+                {loading ? '⏳' : '🚀 Run MAS'}
+              </button>
+            </div>
           </div>
         </div>
 

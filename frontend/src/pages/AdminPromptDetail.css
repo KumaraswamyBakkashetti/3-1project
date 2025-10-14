@@ -508,6 +508,34 @@
   font-weight: 600;
 }
 
+.agent-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.stat-item {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: #718096;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.stat-value {
+  font-size: 1.1rem;
+  color: #2d3748;
+  font-weight: 700;
+}
+
 .agent-comparison {
   display: grid;
   grid-template-columns: 1fr auto 1fr;

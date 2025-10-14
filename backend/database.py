@@ -46,6 +46,14 @@ class Database:
             "created_at": datetime.now()
         }
         return self.runs.insert_one(run).inserted_id
+
+    def update_run(self, run_id, updates: dict):
+        """Update a run document by its ObjectId (run_id can be string or ObjectId)."""
+        from bson import ObjectId
+        oid = ObjectId(run_id) if not isinstance(run_id, ObjectId) else run_id
+        updates['updated_at'] = datetime.now()
+        self.runs.update_one({"_id": oid}, {"$set": updates})
+        return self.get_run(run_id)
     
     def get_run(self, run_id):
         from bson import ObjectId
