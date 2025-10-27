@@ -7,6 +7,7 @@ import UserDashboardSimple from './pages/UserDashboardSimple';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminUserDetail from './pages/AdminUserDetail';
 import AdminPromptDetail from './pages/AdminPromptDetail';
+import AdminAnalytics from './pages/AdminAnalytics';
 
 function App() {
   const [user, setUser] = React.useState(null);
@@ -60,6 +61,11 @@ function App() {
         <Route path="/admin/user/:userId/prompt/:promptId" element={
           user && user.role === 'admin' ? 
           <AdminPromptDetail /> : 
+          <Navigate to="/login" />
+        } />
+        <Route path="/admin/analytics" element={
+          user && user.role === 'admin' ? 
+          <AdminAnalytics /> : 
           <Navigate to="/login" />
         } />
       </Routes>

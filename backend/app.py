@@ -349,7 +349,8 @@ async def run_mas(request: RunRequest, user = Depends(verify_token)):
                 llm=llm,
                 language=request.language,
                 threshold=0.75,
-                max_retries=1
+                max_retries=1,
+                use_full_mas=True  # Use all 4 agents for proper MAS
             )
             
             monitor = EnhancedAgentMonitor(
@@ -361,14 +362,28 @@ async def run_mas(request: RunRequest, user = Depends(verify_token)):
             
             # Simplified enhancement task - don't include full code to avoid safety blocks
             enhancement_task = f"{request.task}\n\nGenerate improved, production-quality code with error handling and best practices."
-            enhanced_result = await mas_enhanced.run(enhancement_task, monitor=monitor)
             
-            if isinstance(enhanced_result, dict):
-                clean_code = enhanced_result.get('output') or enhanced_result.get('code') or str(enhanced_result)
-            else:
-                clean_code = str(enhanced_result)
-            
-            print(f"✅ Enhanced code generated: {len(clean_code)} chars")
+            try:
+                enhanced_result = await mas_enhanced.run(enhancement_task, monitor=monitor)
+                
+                if isinstance(enhanced_result, dict):
+                    clean_code = enhanced_result.get('output') or enhanced_result.get('code') or str(enhanced_result)
+                else:
+                    clean_code = str(enhanced_result)
+                
+                # Check if enhancement failed (error message, blocked, or too short)
+                if "Error:" in clean_code or "blocked" in clean_code.lower() or len(clean_code) < 100:
+                    print(f"⚠️ Enhancement failed or blocked, using initial code as final output")
+                    clean_code = initial_code
+                    auto_enhanced = False
+                else:
+                    auto_enhanced = True
+                    print(f"✅ Enhanced code generated: {len(clean_code)} chars")
+            except Exception as e:
+                print(f"⚠️ Enhancement step failed: {e}")
+                print(f"📦 Using initial code as final output")
+                clean_code = initial_code
+                auto_enhanced = False
             
             # Extract monitor data with agent-level scores
             monitor_data = {
@@ -416,10 +431,9 @@ async def run_mas(request: RunRequest, user = Depends(verify_token)):
                     predicted_score = 0.85
                     print(f"📊 Default score: {predicted_score:.3f}")
             
-            auto_enhanced = True
             enhancement_loops = 1
         
-        # STEP 5: Save to database
+        # STEP 5: Save to database with BOTH initial and final code
         print(f"📊 Final: Initial={len(initial_code)} chars (score={initial_score:.2f}), Enhanced={len(clean_code)} chars (score={predicted_score:.2f})")
         run_id = db.save_run(
             user_id=user["username"],
@@ -428,7 +442,9 @@ async def run_mas(request: RunRequest, user = Depends(verify_token)):
             code=clean_code,
             predicted_score=float(predicted_score),
             features=features,
-            monitor_data=monitor_data
+            monitor_data=monitor_data,
+            initial_code=initial_code,  # Pass initial code
+            initial_score=float(initial_score)  # Pass initial score
         )
         
         print(f"✅ Response ready: {len(clean_code)} chars, {predicted_score:.2f} score")
@@ -592,6 +608,14 @@ async def get_run(run_id: str, user = Depends(verify_token)):
         raise HTTPException(status_code=403, detail="Not authorized")
     run["_id"] = str(run["_id"])
     return run
+
+@app.get("/admin/all_runs")
+async def get_all_runs_admin():
+    """Fetch all runs for admin analytics dashboard - no auth needed for demo"""
+    runs = db.get_all_runs()
+    for run in runs:
+        run["_id"] = str(run["_id"])
+    return {"runs": runs, "total": len(runs)}
 
 @app.get("/api/export_csv")
 async def export_csv(user = Depends(verify_token)):

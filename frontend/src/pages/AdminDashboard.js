@@ -108,6 +108,12 @@ function AdminDashboard({ user, onLogout }) {
           </div>
           <div className="header-right">
             <button 
+              className="analytics-btn"
+              onClick={() => navigate('/admin/analytics')}
+            >
+              📊 View Analytics
+            </button>
+            <button 
               className="download-csv-btn"
               onClick={handleDownloadCSV}
               disabled={downloading}

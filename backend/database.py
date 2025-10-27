@@ -34,13 +34,15 @@ class Database:
         user = self.users.find_one({"username": username, "password": self.hash_password(password)})
         return user
     
-    def save_run(self, user_id, username, task, code, predicted_score, features, monitor_data):
+    def save_run(self, user_id, username, task, code, predicted_score, features, monitor_data, initial_code=None, initial_score=None):
         run = {
             "user_id": str(user_id),
             "username": username,
             "task": task,
-            "code": code,
+            "code": code,  # Final/enhanced code
+            "initial_code": initial_code,  # Store initial code separately
             "predicted_score": predicted_score,
+            "initial_score": initial_score,  # Store initial score
             "features": features,
             "monitor_data": monitor_data,
             "created_at": datetime.now()

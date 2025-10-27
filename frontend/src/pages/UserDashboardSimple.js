@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { runMAS, getUserRuns } from '../api';
+import AgentCollaborationGraph from '../components/AgentCollaborationGraph';
 import './UserDashboardSimple.css';
 
 function UserDashboardSimple({ user, onLogout }) {
@@ -401,6 +402,16 @@ function UserDashboardSimple({ user, onLogout }) {
                         </div>
                       </div>
                     </div>
+                    
+                    {/* Agent Collaboration Graph */}
+                    {msg.metrics.agent_stats && Object.keys(msg.metrics.agent_stats).length > 0 && (
+                      <div className="metrics-section">
+                        <AgentCollaborationGraph 
+                          agentStats={msg.metrics.agent_stats}
+                          graphEdges={msg.metrics.monitor_data?.graph_edges || []}
+                        />
+                      </div>
+                    )}
                     
                     {msg.metrics.auto_enhanced && (
                       <div className="enhancement-notice">

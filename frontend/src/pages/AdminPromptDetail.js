@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getRun } from '../api';
+import AgentCollaborationGraph from '../components/AgentCollaborationGraph';
 import './AdminPromptDetail.css';
 
 function AdminPromptDetail() {
@@ -278,6 +279,13 @@ function AdminPromptDetail() {
           <p className="section-description">
             Detailed view of each agent's performance including scores, latencies, and enhancement loops
           </p>
+          
+          {/* Agent Collaboration Graph */}
+          <AgentCollaborationGraph 
+            agentStats={run.monitor_data.agent_stats}
+            graphEdges={run.monitor_data.graph_edges || []}
+          />
+          
           <div className="agents-breakdown">
             {Object.entries(run.monitor_data.agent_stats).map(([agentName, agentData]) => {
               const scores = agentData.scores || [];
