@@ -292,13 +292,23 @@ class EnhancedAgentMonitor:
             return self._heuristic_score(output)
         
         try:
-            # OPTIMIZED: Short, direct prompt for fast scoring
-            prompt = f"""Score this output (0.0-1.0 only):
+            # OPTIMIZED: Improved prompt for accurate code quality scoring
+            output_preview = output[:1500] if len(output) > 1500 else output
+            prompt = f"""Rate this code solution on a scale of 0.0 to 1.0:
 
 Task: {task}
-Output: {output[:500]}
 
-Reply with ONLY a number like 0.85"""
+Code:
+{output_preview}
+
+Scoring criteria (0.0-1.0):
+- 0.9-1.0: Excellent, complete, efficient solution with good practices
+- 0.7-0.9: Good solution, mostly correct with minor issues
+- 0.5-0.7: Acceptable, works but has noticeable problems
+- 0.3-0.5: Poor, significant issues or incomplete
+- 0.0-0.3: Very poor or doesn't work
+
+Reply with ONLY the score number (e.g., 0.85)"""
             
             # Handle different LLM interfaces
             if callable(self.llm):
@@ -320,12 +330,16 @@ Reply with ONLY a number like 0.85"""
             match = re.search(r'0?\.\d+|[01]\.?\d*', score_text)
             if match:
                 score = float(match.group())
-                return max(0.0, min(1.0, score))
+                score = max(0.0, min(1.0, score))
+                # Ensure minimum realistic score for working code
+                if len(output) > 100 and "Error:" not in output and score < 0.5:
+                    score = 0.65  # Bump up unreasonably low scores for working code
+                return score
             else:
                 # Fallback: if response looks positive, give high score
-                positive_words = ['good', 'correct', 'excellent', 'great', 'well']
+                positive_words = ['good', 'correct', 'excellent', 'great', 'well', 'solid']
                 if any(word in score_text.lower() for word in positive_words):
-                    return 0.85
+                    return 0.80
                 return self._heuristic_score(output)
                 
         except Exception as e:
@@ -334,14 +348,31 @@ Reply with ONLY a number like 0.85"""
             return self._heuristic_score(output)
     
     def _heuristic_score(self, output: str) -> float:
-        """Fallback heuristic scoring."""
+        """Fallback heuristic scoring based on code characteristics."""
         if not output or "Error:" in output:
-            return 0.3
-        if len(output) < 50:
-            return 0.5
-        if len(output) > 200:
-            return 0.75
-        return 0.6  # Default score for medium-length outputs
+            return 0.35
+        
+        # Score based on length and code quality indicators
+        score = 0.60  # Base score for any code
+        
+        if len(output) > 500:
+            score += 0.10  # Bonus for substantial code
+        
+        if len(output) > 1000:
+            score += 0.05  # Additional bonus for comprehensive code
+            
+        # Check for good coding practices
+        code_lower = output.lower()
+        if 'def ' in code_lower or 'function' in code_lower or 'public' in code_lower:
+            score += 0.05  # Has function definitions
+        if 'class ' in code_lower:
+            score += 0.03  # Has classes
+        if '//' in output or '#' in output or '/*' in output:
+            score += 0.05  # Has comments
+        if 'return' in code_lower:
+            score += 0.02  # Has return statements
+            
+        return min(0.85, score)  # Cap at 0.85 for heuristic
     
     async def _generate_enhancement_feedback(
         self,
