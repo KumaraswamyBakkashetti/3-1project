@@ -193,21 +193,21 @@
   font-size: 0.9rem;
 }
 
-/* Main Content - 2 Columns */
+/* Main Content - ChatGPT Style Centered Chat */
 .main-content {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0;
+  display: flex;
   flex: 1;
   overflow: hidden;
 }
 
-/* Left Panel - Chat */
-.chat-panel {
+/* Centered Chat Container */
+.chat-container {
   display: flex;
   flex-direction: column;
-  background: #ffffff; /* Pure white like ChatGPT */
-  border-right: 1px solid #e0e0e0;
+  flex: 1;
+  max-width: 800px;
+  margin: 0 auto;
+  background: #ffffff;
 }
 
 .messages-container {
@@ -245,7 +245,7 @@
 }
 
 .message-bubble {
-  max-width: 70%;
+  max-width: 80%;
   padding: 1rem 1.25rem;
   border-radius: 12px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -548,7 +548,8 @@
   overflow-x: auto;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   margin-bottom: 1.5rem;
-  max-height: 600px;
+  max-height: 70vh;  /* Increased from 600px to 70% of viewport height */
+  min-height: 400px; /* Ensure minimum readable height */
   overflow-y: auto;
 }
 
@@ -565,8 +566,8 @@
   margin: 0;
   color: #1f2937;
   font-family: 'Consolas', 'Monaco', 'Courier New', 'Menlo', monospace;
-  font-size: 0.95rem;
-  line-height: 1.7;
+  font-size: 1rem;     /* Increased from 0.95rem to 1rem */
+  line-height: 1.8;    /* Increased from 1.7 to 1.8 for better readability */
   white-space: pre-wrap;
   word-wrap: break-word;
 }

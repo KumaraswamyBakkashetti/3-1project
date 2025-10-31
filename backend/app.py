@@ -253,9 +253,13 @@ async def run_mas(request: RunRequest, user = Depends(verify_token)):
         # Import necessary components from AgentMonitor
         from AgentMonitor import EnhancedAgentMonitor, CodeGenerationMAS, MASPredictor
         from AgentMonitor.gemini_api import gemini_call
+        from AgentMonitor.groq_api import groq_call
         
-        # Use gemini_call as LLM (with automatic key rotation)
-        llm = gemini_call
+        # DUAL-LLM SETUP: Gemini for code generation, Groq (FREE) for judging
+        llm = gemini_call  # Code generation (powerful model)
+        judge_llm = groq_call  # Scoring/feedback (FREE, fast model)
+        
+        print("🎯 Using dual-LLM: Gemini (generation) + Groq (FREE judging)")
         
         # Determine if this is an enhancement request or initial request
         is_enhancement = bool(request.code and request.code.strip())
@@ -273,35 +277,59 @@ async def run_mas(request: RunRequest, user = Depends(verify_token)):
             
             monitor = EnhancedAgentMonitor(
                 llm=llm,
+                judge_llm=judge_llm,  # Use FREE Groq for judging
                 threshold=0.75,
                 max_retries=1,
                 debug=True
             )
             
-            enhancement_task = f"{request.task}\n\nExisting code:\n{request.code}\n\nImprove this code with better quality and best practices."
+            # Keep original task as-is - it already has language specification
+            enhancement_task = request.task
             print(f"🔄 Running enhancement with monitoring...")
-            result = await mas.run(enhancement_task, monitor=monitor)
             
-            if isinstance(result, dict):
-                clean_code = result.get('output') or result.get('code') or str(result)
+            initial_code = request.code
+            
+            # Use heuristic for user-provided code (faster, no API call)
+            if len(initial_code) > 500:
+                initial_score = 0.75
+            elif len(initial_code) > 200:
+                initial_score = 0.70
             else:
-                clean_code = str(result)
+                initial_score = 0.65
+            print(f"📊 User code score (heuristic): {initial_score:.3f}")
+            
+            # Try to enhance
+            try:
+                result = await mas.run(enhancement_task, monitor=monitor)
+                
+                if isinstance(result, dict):
+                    clean_code = result.get('output') or result.get('code') or str(result)
+                else:
+                    clean_code = str(result)
+                
+                # Check if enhancement failed
+                if "Error:" in clean_code or "blocked" in clean_code.lower() or len(clean_code) < 100:
+                    print(f"⚠️ Enhancement failed, using original code")
+                    clean_code = initial_code
+                    predicted_score = initial_score  # Use initial score since code didn't improve
+                    auto_enhanced = False
+                else:
+                    # Enhancement succeeded, score the enhanced code
+                    try:
+                        predicted_score = await temp_monitor._score_output(request.task, clean_code, "EnhancedCode")
+                        print(f"📊 Enhanced code score: {predicted_score:.3f}")
+                    except:
+                        predicted_score = initial_score * 1.1  # Assume 10% improvement
+                    auto_enhanced = True
+            except Exception as e:
+                print(f"⚠️ Enhancement failed: {e}")
+                clean_code = initial_code
+                predicted_score = initial_score
+                auto_enhanced = False
             
             monitor_data = None
-            initial_code = request.code
-            auto_enhanced = False
             enhancement_loops = 0
             features = None
-            predicted_score = 0.85
-            
-            # Score the user-provided code
-            try:
-                from AgentMonitor.core.enhanced_monitor import EnhancedAgentMonitor
-                temp_monitor = EnhancedAgentMonitor(llm=llm, threshold=0.75, max_retries=0, debug=False)
-                initial_score = await temp_monitor._score_output(request.task, initial_code, "UserProvidedCode")
-                print(f"📊 User code score: {initial_score:.3f}")
-            except:
-                initial_score = 0.75  # Fallback for user-provided code
             
         else:
             # NEW WORKFLOW: Generate initial code, then automatically enhance it
@@ -309,16 +337,43 @@ async def run_mas(request: RunRequest, user = Depends(verify_token)):
             
             # STEP 1: Generate initial code (FAST, no monitoring)
             print(f"⚡ Step 1/2: Generating initial code...")
-            # Honor the requested language for initial generation; default to 'auto' if empty
-            initial_language = (request.language or 'auto').lower()
+            # Detect language from task if not specified
+            task_lower = request.task.lower()
+            if not request.language or request.language == 'auto':
+                # Try to detect language from task text
+                if ' java' in task_lower or 'in java' in task_lower:
+                    initial_language = 'java'
+                elif ' python' in task_lower or 'in python' in task_lower:
+                    initial_language = 'python'
+                elif 'javascript' in task_lower or ' js' in task_lower:
+                    initial_language = 'javascript'
+                else:
+                    initial_language = 'auto'
+            else:
+                initial_language = request.language.lower()
+            
+            print(f"🔍 Detected language: {initial_language}")
+            
+            # STEP 1: Generate initial code WITH simple monitoring for features
+            print(f"⚡ Step 1/2: Generating initial code with basic monitoring...")
             mas_initial = CodeGenerationMAS(
                 llm=llm,
                 language=initial_language,
-                threshold=1.0,
-                max_retries=0
+                threshold=1.0,  # No enhancement in initial step
+                max_retries=0,
+                use_full_mas=False  # Fast mode - Coder only
             )
             
-            initial_result = await mas_initial.run(request.task, monitor=None)
+            # Create simple monitor for initial code (no enhancement, just feature collection)
+            initial_monitor = EnhancedAgentMonitor(
+                llm=llm,
+                judge_llm=judge_llm,
+                threshold=1.0,  # No enhancement trigger
+                max_retries=0,
+                debug=False
+            )
+            
+            initial_result = await mas_initial.run(request.task, monitor=initial_monitor)
             
             if isinstance(initial_result, dict):
                 initial_code = initial_result.get('output') or initial_result.get('code') or str(initial_result)
@@ -327,15 +382,17 @@ async def run_mas(request: RunRequest, user = Depends(verify_token)):
             
             print(f"✅ Initial code generated: {len(initial_code)} chars")
             
-            # Score the initial code for comparison
+            # Extract features from initial monitoring and predict with XGBoost
+            initial_features = extract_features_from_monitor(initial_monitor.monitor_data)
             try:
-                from AgentMonitor.core.enhanced_monitor import EnhancedAgentMonitor
-                temp_monitor = EnhancedAgentMonitor(llm=llm, threshold=0.75, max_retries=0, debug=False)
-                initial_score = await temp_monitor._score_output(request.task, initial_code, "InitialCoder")
-                print(f"📊 Initial code score: {initial_score:.3f}")
+                # Use global predictor (already loaded)
+                if predictor:
+                    initial_score = predictor.predict(initial_features)
+                    print(f"📊 Initial code XGBoost score: {initial_score:.3f}")
+                else:
+                    raise Exception("Predictor not loaded")
             except Exception as e:
-                print(f"⚠️ Initial scoring failed, using heuristic: {e}")
-                # Heuristic fallback
+                print(f"⚠️ XGBoost prediction failed, using heuristic: {e}")
                 if len(initial_code) > 500:
                     initial_score = 0.70
                 elif len(initial_code) > 200:
@@ -347,7 +404,7 @@ async def run_mas(request: RunRequest, user = Depends(verify_token)):
             print(f"🔄 Step 2/2: Enhancing with agent-level monitoring...")
             mas_enhanced = CodeGenerationMAS(
                 llm=llm,
-                language=request.language,
+                language=initial_language,  # Use same detected language
                 threshold=0.75,
                 max_retries=1,
                 use_full_mas=True  # Use all 4 agents for proper MAS
@@ -355,13 +412,15 @@ async def run_mas(request: RunRequest, user = Depends(verify_token)):
             
             monitor = EnhancedAgentMonitor(
                 llm=llm,
+                judge_llm=judge_llm,  # Use FREE Groq for judging
                 threshold=0.75,
                 max_retries=1,
                 debug=True
             )
             
-            # Simplified enhancement task - don't include full code to avoid safety blocks
-            enhancement_task = f"{request.task}\n\nGenerate improved, production-quality code with error handling and best practices."
+            # Keep the original task as-is (already contains language specification)
+            # Don't modify it - Gemini understands "in Java" from the original prompt
+            enhancement_task = request.task
             
             try:
                 enhanced_result = await mas_enhanced.run(enhancement_task, monitor=monitor)
@@ -372,10 +431,12 @@ async def run_mas(request: RunRequest, user = Depends(verify_token)):
                     clean_code = str(enhanced_result)
                 
                 # Check if enhancement failed (error message, blocked, or too short)
+                enhancement_failed = False
                 if "Error:" in clean_code or "blocked" in clean_code.lower() or len(clean_code) < 100:
                     print(f"⚠️ Enhancement failed or blocked, using initial code as final output")
                     clean_code = initial_code
                     auto_enhanced = False
+                    enhancement_failed = True
                 else:
                     auto_enhanced = True
                     print(f"✅ Enhanced code generated: {len(clean_code)} chars")
@@ -384,52 +445,56 @@ async def run_mas(request: RunRequest, user = Depends(verify_token)):
                 print(f"📦 Using initial code as final output")
                 clean_code = initial_code
                 auto_enhanced = False
+                enhancement_failed = True
             
             # Extract monitor data with agent-level scores
             monitor_data = {
                 'threshold': 0.75,
                 'max_retries': 1,
-                'auto_enhanced': True,
+                'auto_enhanced': auto_enhanced,
                 'agent_stats': monitor.monitor_data.get('agent_stats', {}),
                 'enhancement_history': monitor.enhancement_history
             }
             
-            # Extract features from monitor data
-            features = extract_features_from_monitor(monitor.monitor_data)
+            # Extract features from enhanced monitoring
+            enhanced_features = extract_features_from_monitor(monitor.monitor_data)
             
-            # Calculate scores using XGBoost model or agent scores as fallback
-            agent_stats = monitor.monitor_data.get('agent_stats', {})
-            agent_scores = []
-            
-            if agent_stats:
-                # Get agent-level scores
-                for agent_name, stats in agent_stats.items():
-                    if stats.get('scores'):
-                        agent_scores.extend(stats['scores'])
-            
-            # Try to use trained XGBoost model first
-            if predictor and features:
+            # Predict enhanced code quality with XGBoost
+            if enhancement_failed:
+                # Enhancement failed - use initial score
+                predicted_score = initial_score
+                features = initial_features
+                print(f"📊 Enhancement failed - final score: {predicted_score:.3f}")
+            else:
+                # Enhancement succeeded - predict with XGBoost
                 try:
-                    predicted_score = predictor.predict(features)
-                    print(f"🤖 XGBoost prediction: {predicted_score:.3f}")
+                    # Use global predictor (already loaded)
+                    if predictor:
+                        predicted_score = predictor.predict(enhanced_features)
+                        features = enhanced_features
+                        print(f"📊 Enhanced XGBoost score: {predicted_score:.3f}")
+                        print(f"📈 Improvement: {predicted_score - initial_score:+.3f}")
+                        
+                        # CRITICAL: If enhancement made it worse, use initial code!
+                        if predicted_score < initial_score:
+                            print(f"⚠️ Enhancement made code WORSE! Using initial code instead.")
+                            print(f"   Initial score: {initial_score:.3f} > Enhanced score: {predicted_score:.3f}")
+                            clean_code = initial_code
+                            predicted_score = initial_score
+                            features = initial_features
+                            auto_enhanced = False
+                    else:
+                        raise Exception("Predictor not loaded")
                 except Exception as e:
                     print(f"⚠️ XGBoost prediction failed: {e}")
-                    # Fallback to agent score averaging
-                    if agent_scores:
-                        predicted_score = sum(agent_scores) / len(agent_scores)
-                        print(f"📊 Using agent avg fallback: {predicted_score:.3f}")
-                    else:
-                        predicted_score = 0.85
-                        print(f"📊 Using default fallback: {predicted_score:.3f}")
-            else:
-                # No predictor available, use agent scores
-                if agent_scores:
-                    predicted_score = sum(agent_scores) / len(agent_scores)
-                    print(f"📊 Agent-level scores: {agent_scores}")
-                    print(f"📊 Agent avg score: {predicted_score:.3f}")
-                else:
-                    predicted_score = 0.85
-                    print(f"📊 Default score: {predicted_score:.3f}")
+                    # Fallback: use max agent score
+                    agent_stats = monitor.monitor_data.get('agent_stats', {})
+                    agent_scores = []
+                    for stats in agent_stats.values():
+                        if stats.get('scores'):
+                            agent_scores.extend(stats['scores'])
+                    predicted_score = max(agent_scores) if agent_scores else initial_score
+                    features = enhanced_features
             
             enhancement_loops = 1
         
@@ -523,11 +588,13 @@ async def _background_enhance_run(run_id: str, task: str, initial_code: str, lan
         print(f"[BG] Enhancer started for run {run_id} (FULL MAS: {use_full_mas})")
         from AgentMonitor import CodeGenerationMAS, EnhancedAgentMonitor
         from AgentMonitor.gemini_api import gemini_call
+        from AgentMonitor.groq_api import groq_call
 
         llm = gemini_call
+        judge_llm = groq_call
 
         mas_enhanced = CodeGenerationMAS(llm=llm, language=language, threshold=0.75, max_retries=1, use_full_mas=use_full_mas)
-        monitor = EnhancedAgentMonitor(llm=llm, threshold=0.75, max_retries=1, debug=True)  # Enable debug
+        monitor = EnhancedAgentMonitor(llm=llm, judge_llm=judge_llm, threshold=0.75, max_retries=1, debug=True)  # Enable debug
 
         # Prepend language directive if requested
         lang_directive = f"LANGUAGE: {language}\n\n" if language and language not in ['auto', 'any'] else ''

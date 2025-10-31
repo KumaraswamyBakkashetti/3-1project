@@ -99,8 +99,8 @@ function UserDashboard({ user, onLogout }) {
 
       // Remove loading message and show initial code
   setMessages(prev => prev.filter(m => !m.isLoading));
-  // Show initial code inline as a chat-like message
-  setMessages(prev => [...prev, { type: 'bot', text: '✅ Initial code (fast):', result: { code: initial_code, predicted_score: 0.0 } }]);
+  // Show full initial code as a chat-like message
+  setMessages(prev => [...prev, { type: 'bot', text: '✅ Initial code (fast):', result: { code: initial_code, predicted_score: 0.0 }, isFullCode: true }]);
 
       setCurrentResult({ code: initial_code, predicted_score: 0.0, run_id: runId });
       setInitialResult({ code: initial_code, predicted_score: 0.0, run_id: runId });
@@ -115,7 +115,14 @@ function UserDashboard({ user, onLogout }) {
           const runData = await getRun(runId);
           if (runData && runData.monitor_data) {
             // Enhancement complete
-            setMessages(prev => [...prev, { type: 'bot', text: `🔄 Enhancement complete. Predicted score: ${runData.predicted_score.toFixed(2)}`, result: runData }]);
+            setMessages(prev => [...prev, {
+              type: 'bot',
+              text: `🔄 Enhancement complete. Initial score: ${initialResult?.predicted_score || 0} → Final: ${runData.predicted_score.toFixed(2)}`,
+              result: runData,
+              showComparison: true,
+              initialCode: initialResult?.code,
+              finalCode: runData.code || runData.result
+            }]);
             setCurrentResult(runData);
             setShowEnhancedCode(true);
             setShowDetailsPanel(true);
@@ -250,80 +257,86 @@ function UserDashboard({ user, onLogout }) {
           </div>
         </aside>
 
-        {/* Main Content - 2 Column Layout */}
+        {/* Main Content - ChatGPT Style Centered Chat */}
         <div className="main-content">
-          {/* Left Panel - Chatbot Conversation */}
-          <div className="chat-panel">
+          {/* Centered Chat Container */}
+          <div className="chat-container">
             <div className="messages-container">
               {messages.map((msg, idx) => (
                 <div key={idx} className={`message ${msg.type}`}>
                   <div className="message-bubble">
-                  {msg.isLoading && <div className="loading-dots"><span></span><span></span><span></span></div>}
-                  {!msg.isLoading && <p>{msg.text}</p>}
-                  {msg.result && (
-                    <div className="inline-result">
-                      <div className="result-header">
-                        <div className="score-badge">Score: {msg.result.predicted_score.toFixed(2)}</div>
-                        <button 
-                          className="view-details-btn"
-                          onClick={() => {
-                            setCurrentResult(msg.result);
-                            setShowDetailsPanel(true);
-                          }}
-                        >
-                          📊 View More Details
-                        </button>
-                      </div>
-                      
-                      {/* Inline code preview */}
-                      <div className="code-preview">
-                        <div className="code-preview-header">
-                          <span>💻 Generated Code</span>
+                    {msg.isLoading && <div className="loading-dots"><span></span><span></span><span></span></div>}
+                    {!msg.isLoading && <p>{msg.text}</p>}
+                    {msg.result && (
+                      <div className="inline-result">
+                        <div className="result-header">
+                          <div className="score-badge">Score: {msg.result.predicted_score.toFixed(2)}</div>
+                          <button
+                            className="view-details-btn"
+                            onClick={() => {
+                              setCurrentResult(msg.result);
+                              setShowDetailsPanel(true);
+                            }}
+                          >
+                            📊 View More Details
+                          </button>
                         </div>
-                        <pre className="code-preview-content">
-                          {(() => {
-                            const codeText = msg.result.code || msg.result.result || 'No code generated';
-                            console.log('Displaying code preview:', codeText.substring(0, 50));
-                            return codeText.substring(0, 300) + (codeText.length > 300 ? '...' : '');
-                          })()}
-                        </pre>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
 
-          {/* Chat Input */}
-          <div className="chat-input-container">
-            <div className="input-options">
-              <label className="full-mas-toggle">
-                <input 
-                  type="checkbox" 
-                  checked={useFullMAS} 
-                  onChange={(e) => setUseFullMAS(e.target.checked)}
-                />
-                <span>🔬 Full MAS Mode (4 agents + graph metrics)</span>
-              </label>
+                        {/* Inline code preview */}
+                        <div className="code-preview">
+                          <div className="code-preview-header">
+                            <span>💻 Generated Code</span>
+                          </div>
+                          <pre className="code-preview-content">
+                            {(() => {
+                              const codeText = msg.result.code || msg.result.result || 'No code generated';
+                              console.log('Displaying code preview:', codeText.substring(0, 50));
+                              // Show full code for initial code messages, truncate for others
+                              if (msg.isFullCode) {
+                                return codeText;
+                              } else {
+                                return codeText.substring(0, 300) + (codeText.length > 300 ? '...' : '');
+                              }
+                            })()}
+                          </pre>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
             </div>
-            <div className="input-row">
-              <textarea
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Describe your coding task (e.g., 'Create a function to sort an array')..."
-                disabled={loading}
-                rows="3"
-              />
-              <button 
-                onClick={handleSendMessage} 
-                disabled={loading || !inputMessage.trim()}
-                className="send-btn"
-              >
-                {loading ? '⏳' : '🚀 Run MAS'}
-              </button>
+
+            {/* Chat Input */}
+            <div className="chat-input-container">
+              <div className="input-options">
+                <label className="full-mas-toggle">
+                  <input
+                    type="checkbox"
+                    checked={useFullMAS}
+                    onChange={(e) => setUseFullMAS(e.target.checked)}
+                  />
+                  <span>🔬 Full MAS Mode (4 agents + graph metrics)</span>
+                </label>
+              </div>
+              <div className="input-row">
+                <textarea
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Describe your coding task (e.g., 'Create a function to sort an array')..."
+                  disabled={loading}
+                  rows="3"
+                />
+                <button
+                  onClick={handleSendMessage}
+                  disabled={loading || !inputMessage.trim()}
+                  className="send-btn"
+                >
+                  {loading ? '⏳' : '🚀 Run MAS'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -344,29 +357,54 @@ function UserDashboard({ user, onLogout }) {
             <>
               {/* Code Section - Simple, clean code display */}
               <div className="code-section">
-                {showEnhancedCode && initialResult ? (
-                  <div className="code-comparison">
-                    <div className="code-column">
-                      <h3>📝 Initial Code (Score: {initialResult.predicted_score.toFixed(2)})</h3>
-                      <div className="code-display white">
-                        <pre>{initialResult.code || initialResult.result || 'No code'}</pre>
+                {(() => {
+                  // Check if we have a message with comparison data
+                  const comparisonMsg = messages.find(msg => msg.showComparison);
+                  if (comparisonMsg) {
+                    return (
+                      <div className="code-comparison">
+                        <div className="code-column">
+                          <h3>📝 Initial Code (Score: {initialResult?.predicted_score.toFixed(2) || '0.00'})</h3>
+                          <div className="code-display white">
+                            <pre>{comparisonMsg.initialCode || 'No initial code'}</pre>
+                          </div>
+                        </div>
+                        <div className="code-column">
+                          <h3 className="enhanced-title">✨ Enhanced Code (Score: {currentResult.predicted_score.toFixed(2)})</h3>
+                          <div className="code-display white enhanced">
+                            <pre>{comparisonMsg.finalCode || 'No enhanced code'}</pre>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    <div className="code-column">
-                      <h3 className="enhanced-title">✨ Enhanced Code (Score: {currentResult.predicted_score.toFixed(2)})</h3>
-                      <div className="code-display white enhanced">
-                        <pre>{currentResult.code || currentResult.result || 'No code'}</pre>
+                    );
+                  } else if (showEnhancedCode && initialResult) {
+                    return (
+                      <div className="code-comparison">
+                        <div className="code-column">
+                          <h3>📝 Initial Code (Score: {initialResult.predicted_score.toFixed(2)})</h3>
+                          <div className="code-display white">
+                            <pre>{initialResult.code || initialResult.result || 'No code'}</pre>
+                          </div>
+                        </div>
+                        <div className="code-column">
+                          <h3 className="enhanced-title">✨ Enhanced Code (Score: {currentResult.predicted_score.toFixed(2)})</h3>
+                          <div className="code-display white enhanced">
+                            <pre>{currentResult.code || currentResult.result || 'No code'}</pre>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <h3>💻 Complete Generated Code</h3>
-                    <div className="code-display white">
-                      <pre>{currentResult.code || currentResult.result || 'No code generated'}</pre>
-                    </div>
-                  </>
-                )}
+                    );
+                  } else {
+                    return (
+                      <>
+                        <h3>💻 Complete Generated Code</h3>
+                        <div className="code-display white">
+                          <pre>{currentResult.code || currentResult.result || 'No code generated'}</pre>
+                        </div>
+                      </>
+                    );
+                  }
+                })()}
               </div>
 
               {/* Performance Indicators & Charts Section */}
@@ -439,12 +477,11 @@ function UserDashboard({ user, onLogout }) {
         </div>
         )}
       </div>
-      </div>
 
       {/* Bottom Action Buttons */}
       <div className="action-buttons">
-        <button 
-          onClick={handleEnhanceAgain} 
+        <button
+          onClick={handleEnhanceAgain}
           disabled={!currentResult || loading}
           className="enhance-btn"
         >

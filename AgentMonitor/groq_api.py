@@ -1,0 +1,160 @@
+# AgentMonitor/groq_api.py
+"""
+Groq API Wrapper - 100% FREE API for LLM judging/scoring
+
+Groq provides FREE ultra-fast inference with generous limits:
+- 30 requests per minute
+- No credit card required
+- Models: Llama 3.1, Mixtral, Gemma
+
+Perfect for code scoring and enhancement feedback!
+"""
+
+import os
+import requests
+from typing import Optional
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load .env file from AgentMonitor directory
+env_path = Path(__file__).parent / '.env'
+if env_path.exists():
+    load_dotenv(env_path)
+else:
+    # Try parent directory (Final folder)
+    env_path = Path(__file__).parent.parent / '.env'
+    if env_path.exists():
+        load_dotenv(env_path)
+
+
+class GroqAPI:
+    """
+    Groq API wrapper for FREE LLM inference
+    
+    Sign up: https://console.groq.com
+    Get API key: https://console.groq.com/keys
+    """
+    
+    def __init__(self, api_key: Optional[str] = None):
+        """
+        Args:
+            api_key: Groq API key (or set GROQ_API_KEY env var)
+        """
+        self.api_key = api_key or os.getenv("GROQ_API_KEY")
+        
+        if not self.api_key:
+            raise ValueError(
+                "Groq API key required!\n"
+                "1. Sign up: https://console.groq.com\n"
+                "2. Get key: https://console.groq.com/keys\n"
+                "3. Set GROQ_API_KEY in .env file"
+            )
+        
+        self.base_url = "https://api.groq.com/openai/v1/chat/completions"
+        self.default_model = "llama-3.1-8b-instant"  # Fast and accurate
+        
+        # Test connection
+        self._test_connection()
+    
+    def _test_connection(self):
+        """Test if API key is valid"""
+        try:
+            response = self._call("Test", max_tokens=5)
+            print(f"✅ Groq API connected successfully (model: {self.default_model})")
+        except Exception as e:
+            print(f"⚠️ Groq API connection failed: {e}")
+            print("   Will fall back to heuristic scoring if needed")
+    
+    def _call(
+        self, 
+        prompt: str, 
+        model: Optional[str] = None,
+        temperature: float = 0.3,
+        max_tokens: int = 200
+    ) -> str:
+        """
+        Call Groq API
+        
+        Args:
+            prompt: Input prompt
+            model: Model name (default: llama-3.1-8b-instant)
+            temperature: Creativity (0.0-1.0)
+            max_tokens: Max response length
+            
+        Returns:
+            Model response text
+        """
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+        
+        payload = {
+            "model": model or self.default_model,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": temperature,
+            "max_tokens": max_tokens
+        }
+        
+        try:
+            response = requests.post(
+                self.base_url,
+                headers=headers,
+                json=payload,
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                return response.json()["choices"][0]["message"]["content"]
+            elif response.status_code == 429:
+                # Rate limit exceeded
+                print("⚠️ Groq rate limit exceeded (30 req/min), using fallback")
+                return ""
+            elif response.status_code == 401:
+                # Invalid API key
+                print("❌ Groq API key invalid! Check GROQ_API_KEY in .env")
+                return ""
+            else:
+                print(f"⚠️ Groq API error {response.status_code}: {response.text}")
+                return ""
+                
+        except requests.exceptions.Timeout:
+            print("⚠️ Groq API timeout")
+            return ""
+        except Exception as e:
+            print(f"⚠️ Groq API call failed: {e}")
+            return ""
+    
+    def __call__(self, prompt: str) -> str:
+        """
+        Make callable like gemini_call()
+        
+        Usage:
+            groq = GroqAPI()
+            response = groq("What is 2+2?")
+        """
+        return self._call(prompt)
+
+
+# Global instance for easy import
+_groq_instance = None
+
+def groq_call(prompt: str) -> str:
+    """
+    Simple function interface (like gemini_call)
+    
+    Usage:
+        from AgentMonitor.groq_api import groq_call
+        score = groq_call("Rate this code: def add(a,b): return a+b")
+    """
+    global _groq_instance
+    
+    if _groq_instance is None:
+        try:
+            _groq_instance = GroqAPI()
+        except ValueError as e:
+            # No API key configured
+            print(f"⚠️ {e}")
+            return ""
+    
+    return _groq_instance(prompt)

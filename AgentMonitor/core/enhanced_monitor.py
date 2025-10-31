@@ -40,7 +40,8 @@ class EnhancedAgentMonitor:
     def __init__(
         self,
         api_key: Optional[str] = None,
-        llm: Optional[Any] = None,  # NEW: Accept LLM function or model directly
+        llm: Optional[Any] = None,  # LLM for code generation
+        judge_llm: Optional[Any] = None,  # NEW: Separate LLM for scoring/feedback
         threshold: float = 0.6,
         max_retries: int = 2,
         log_dir: str = "logs",
@@ -49,7 +50,8 @@ class EnhancedAgentMonitor:
         """
         Args:
             api_key: Not used (kept for backward compatibility)
-            llm: Pre-configured LLM function or model (alternative to api_key)
+            llm: Pre-configured LLM function or model for code generation
+            judge_llm: Separate LLM for scoring/feedback (can be FREE API like Groq!)
             threshold: Score threshold for enhancement (0-1)
             max_retries: Max enhancement attempts
             log_dir: Directory for logs
@@ -61,15 +63,24 @@ class EnhancedAgentMonitor:
         self.log_dir.mkdir(exist_ok=True)
         self.debug = debug
         
-        # Initialize LLM for scoring using Ollama
+        # Initialize LLM for code generation
         if llm:
-            # Use provided LLM (function or model)
             self.llm = llm
         else:
-            # Create Llama function via Ollama
             self.llm = self._create_llama_function()
             if debug:
-                print("[INFO] Using Llama via Ollama for LLM scoring")
+                print("[INFO] Using Llama via Ollama for code generation")
+        
+        # Initialize separate judge LLM (for scoring/feedback)
+        if judge_llm:
+            self.judge_llm = judge_llm
+            if debug:
+                print("[INFO] Using separate judge LLM for scoring/feedback")
+        else:
+            # Fallback: use same LLM for judging
+            self.judge_llm = self.llm
+            if debug:
+                print("[INFO] Using same LLM for both generation and judging")
         
         # Monitoring data (follows paper structure)
         self.monitor_data = {
@@ -283,43 +294,52 @@ class EnhancedAgentMonitor:
         agent_name: str
     ) -> float:
         """
-        Score agent output using LLM (0-1 scale).
+        Score agent output using judge_llm (0-1 scale).
         
+        Uses separate judge_llm (can be FREE API like Groq) for cost optimization.
         Follows paper's "personal score" methodology.
         """
-        if not self.llm:
+        if not self.judge_llm:
             # Fallback: heuristic scoring
             return self._heuristic_score(output)
         
         try:
-            # OPTIMIZED: Improved prompt for accurate code quality scoring
+            # Comprehensive scoring prompt with specific criteria
             output_preview = output[:1500] if len(output) > 1500 else output
-            prompt = f"""Rate this code solution on a scale of 0.0 to 1.0:
+            prompt = f"""Rate the quality of this code on a scale from 0.0 to 1.0.
 
 Task: {task}
 
 Code:
 {output_preview}
 
-Scoring criteria (0.0-1.0):
-- 0.9-1.0: Excellent, complete, efficient solution with good practices
-- 0.7-0.9: Good solution, mostly correct with minor issues
-- 0.5-0.7: Acceptable, works but has noticeable problems
-- 0.3-0.5: Poor, significant issues or incomplete
-- 0.0-0.3: Very poor or doesn't work
+Evaluate based on:
+- Correctness: Does it solve the task correctly?
+- Completeness: Is implementation complete (no TODO/placeholders)?
+- Test cases: Are there examples/tests included?
+- Optimization: Is the algorithm efficient?
+- Code quality: Clean, readable, professional code?
+- Best practices: Proper naming, structure, comments?
 
-Reply with ONLY the score number (e.g., 0.85)"""
+Score honestly:
+- 0.9-1.0: Excellent (complete, optimized, has tests, professional)
+- 0.7-0.8: Good (works well, could be better optimized)
+- 0.5-0.6: Acceptable (works but missing tests/optimization)
+- 0.3-0.4: Poor (incomplete, has TODOs, inefficient)
+- 0.0-0.2: Very poor (just template/skeleton)
+
+Reply with ONLY the numeric score (e.g., 0.75)"""
             
-            # Handle different LLM interfaces
-            if callable(self.llm):
-                # Function interface (like gemini_call) - run in executor to avoid blocking
+            # Handle different LLM interfaces (using judge_llm instead of self.llm)
+            if callable(self.judge_llm):
+                # Function interface (like groq_call) - run in executor to avoid blocking
                 import asyncio
                 loop = asyncio.get_event_loop()
-                response_text = await loop.run_in_executor(None, self.llm, prompt)
+                response_text = await loop.run_in_executor(None, self.judge_llm, prompt)
                 score_text = response_text.strip() if isinstance(response_text, str) else str(response_text).strip()
-            elif hasattr(self.llm, 'generate_content'):
+            elif hasattr(self.judge_llm, 'generate_content'):
                 # Model object interface (like Gemini model)
-                response = self.llm.generate_content(prompt)
+                response = self.judge_llm.generate_content(prompt)
                 score_text = response.text.strip()
             else:
                 return self._heuristic_score(output)
@@ -331,10 +351,12 @@ Reply with ONLY the score number (e.g., 0.85)"""
             if match:
                 score = float(match.group())
                 score = max(0.0, min(1.0, score))
-                # Ensure minimum realistic score for working code
-                if len(output) > 100 and "Error:" not in output and score < 0.5:
-                    score = 0.65  # Bump up unreasonably low scores for working code
-                return score
+                
+                # Log for debugging - see if Groq gives varied scores
+                if self.debug:
+                    print(f"[{agent_name}] Groq scored: {score:.3f} | Response: {score_text[:50]}")
+                
+                return score  # Trust Groq's honest scoring
             else:
                 # Fallback: if response looks positive, give high score
                 positive_words = ['good', 'correct', 'excellent', 'great', 'well', 'solid']
@@ -381,34 +403,88 @@ Reply with ONLY the score number (e.g., 0.85)"""
         score: float
         , capability: str = ''
     ) -> str:
-        """Generate feedback for enhancement."""
-        if not self.llm:
+        """Generate feedback for enhancement using judge_llm."""
+        if not self.judge_llm:
             return f"Score {score:.2f} is below threshold. Please provide a more complete and accurate response."
         
         try:
-            # OPTIMIZED: Very short feedback prompt (1 sentence instruction)
+            # Deep analysis of code quality and suggest best practices
             cap = (capability or '').lower() if capability is not None else ''
-            lang_hint = f"\n\nPlease keep the improved code in {cap}." if cap and cap not in ['auto', 'llama', 'any', ''] else ''
-            prompt = f"""Task: {task}
-Output score: {score:.2f}
-Current: {output[:300]}
-
-Fix: (1 sentence only){lang_hint}"""
+            lang_hint = f" in {cap}" if cap and cap not in ['auto', 'llama', 'any', ''] else ''
             
-            # Handle different LLM interfaces
-            if callable(self.llm):
-                # Function interface (like gemini_call) - run in executor to avoid blocking
+            # Analyze what's missing from the code
+            code_lower = output.lower()
+            issues = []
+            optimizations = []
+            
+            # Check for incomplete implementation
+            if 'todo' in code_lower or 'implement' in code_lower or 'your code here' in code_lower:
+                issues.append("complete the implementation (remove TODO/placeholders)")
+            
+            # Check for completeness
+            if score < 0.5:
+                issues.append("provide a complete, working solution")
+            
+            # Check for test cases/examples
+            has_main = 'def main' in code_lower or 'public static void main' in code_lower or 'if __name__' in code_lower
+            has_test = 'test' in code_lower or 'example' in code_lower
+            if not has_main and not has_test and len(output) > 200:
+                issues.append("add test cases with examples in main method")
+            
+            # Check for optimization opportunities
+            if score < 0.8:
+                # Suggest space/time complexity improvements
+                if 'char[][]' in output or 'string[][]' in output.lower():
+                    optimizations.append("consider using int[] array for O(N) space instead of O(N²) 2D array")
+                
+                if 'for' in code_lower and 'for' in output[output.lower().find('for')+3:]:
+                    # Nested loops detected
+                    optimizations.append("optimize nested loops to reduce time complexity")
+                
+                if len(output) > 1000 and 'static' not in code_lower and 'final' not in code_lower:
+                    optimizations.append("use appropriate access modifiers and constants")
+            
+            # Check for professional code practices
+            if '//' not in output and '/**' not in output and '#' not in output and score < 0.75:
+                issues.append("add comments and documentation")
+            
+            if 'error' not in code_lower and 'exception' not in code_lower and len(output) > 300:
+                optimizations.append("add proper error handling")
+            
+            # Build comprehensive feedback
+            all_suggestions = issues + optimizations
+            
+            if all_suggestions:
+                # Prioritize: implementation > tests > optimization
+                priority_feedback = all_suggestions[:2]  # Top 2 suggestions
+                feedback = f"Improve{lang_hint}: {'; '.join(priority_feedback)}"
+            else:
+                feedback = f"Enhance{lang_hint}: optimize algorithm for better space/time complexity, add comprehensive tests, ensure professional code quality"
+            
+            # Create detailed prompt for enhancement
+            prompt = f"""The previous code scored {score:.2f}/1.0 (below 0.75 threshold).
+
+Task: {task}
+
+Current issues: {feedback}
+
+Provide ONE specific, actionable instruction to generate the BEST version of this code{lang_hint}.
+Consider: algorithm efficiency (O(N) vs O(N²)), code elegance, professional practices, comprehensive tests."""
+            
+            # Handle different LLM interfaces (using judge_llm)
+            if callable(self.judge_llm):
+                # Function interface (like groq_call) - run in executor to avoid blocking
                 import asyncio
                 loop = asyncio.get_event_loop()
-                response_text = await loop.run_in_executor(None, self.llm, prompt)
+                response_text = await loop.run_in_executor(None, self.judge_llm, prompt)
                 feedback = response_text if isinstance(response_text, str) else str(response_text)
                 # Extract first sentence only
                 import re
                 sentences = re.split(r'[.!?]\s+', feedback)
                 return sentences[0] if sentences else feedback[:200]
-            elif hasattr(self.llm, 'generate_content'):
+            elif hasattr(self.judge_llm, 'generate_content'):
                 # Model object interface (like Gemini model)
-                response = self.llm.generate_content(prompt)
+                response = self.judge_llm.generate_content(prompt)
                 feedback = response.text.strip()
                 # Extract first sentence only
                 import re
