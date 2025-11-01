@@ -531,6 +531,25 @@
   margin-bottom: 1.5rem;
 }
 
+/* NEW: Stacked code layout - Initial on top, Final below */
+.code-comparison-stacked {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.code-block-stacked {
+  width: 100%;
+}
+
+.code-block-stacked h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0.75rem;
+  padding-left: 0.5rem;
+  border-left: 4px solid #667eea;
+}
+
 .code-column {
   min-width: 0; /* Allows content to shrink */
 }

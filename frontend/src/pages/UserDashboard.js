@@ -355,22 +355,25 @@ function UserDashboard({ user, onLogout }) {
           
           {currentResult ? (
             <>
-              {/* Code Section - Simple, clean code display */}
+              {/* Code Section - Stacked code display: Initial on top, Final below */}
               <div className="code-section">
                 {(() => {
                   // Check if we have a message with comparison data
                   const comparisonMsg = messages.find(msg => msg.showComparison);
                   if (comparisonMsg) {
                     return (
-                      <div className="code-comparison">
-                        <div className="code-column">
+                      <div className="code-comparison-stacked">
+                        {/* Initial Code Block - Top */}
+                        <div className="code-block-stacked">
                           <h3>📝 Initial Code (Score: {initialResult?.predicted_score.toFixed(2) || '0.00'})</h3>
                           <div className="code-display white">
                             <pre>{comparisonMsg.initialCode || 'No initial code'}</pre>
                           </div>
                         </div>
-                        <div className="code-column">
-                          <h3 className="enhanced-title">✨ Enhanced Code (Score: {currentResult.predicted_score.toFixed(2)})</h3>
+                        
+                        {/* Enhanced Code Block - Bottom */}
+                        <div className="code-block-stacked">
+                          <h3 className="enhanced-title">✨ Final Enhanced Code (Score: {currentResult.predicted_score.toFixed(2)})</h3>
                           <div className="code-display white enhanced">
                             <pre>{comparisonMsg.finalCode || 'No enhanced code'}</pre>
                           </div>
@@ -379,15 +382,18 @@ function UserDashboard({ user, onLogout }) {
                     );
                   } else if (showEnhancedCode && initialResult) {
                     return (
-                      <div className="code-comparison">
-                        <div className="code-column">
+                      <div className="code-comparison-stacked">
+                        {/* Initial Code Block - Top */}
+                        <div className="code-block-stacked">
                           <h3>📝 Initial Code (Score: {initialResult.predicted_score.toFixed(2)})</h3>
                           <div className="code-display white">
                             <pre>{initialResult.code || initialResult.result || 'No code'}</pre>
                           </div>
                         </div>
-                        <div className="code-column">
-                          <h3 className="enhanced-title">✨ Enhanced Code (Score: {currentResult.predicted_score.toFixed(2)})</h3>
+                        
+                        {/* Enhanced Code Block - Bottom */}
+                        <div className="code-block-stacked">
+                          <h3 className="enhanced-title">✨ Final Enhanced Code (Score: {currentResult.predicted_score.toFixed(2)})</h3>
                           <div className="code-display white enhanced">
                             <pre>{currentResult.code || currentResult.result || 'No code'}</pre>
                           </div>
