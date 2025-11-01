@@ -304,31 +304,50 @@ class EnhancedAgentMonitor:
             return self._heuristic_score(output)
         
         try:
-            # Comprehensive scoring prompt with specific criteria
+            # CRITICAL scoring prompt - be VERY strict and demanding
             output_preview = output[:1500] if len(output) > 1500 else output
-            prompt = f"""Rate the quality of this code on a scale from 0.0 to 1.0.
+            prompt = f"""You are a STRICT code reviewer. Rate this code quality from 0.0 to 1.0.
 
 Task: {task}
 
 Code:
 {output_preview}
 
-Evaluate based on:
-- Correctness: Does it solve the task correctly?
-- Completeness: Is implementation complete (no TODO/placeholders)?
-- Test cases: Are there examples/tests included?
-- Optimization: Is the algorithm efficient?
-- Code quality: Clean, readable, professional code?
-- Best practices: Proper naming, structure, comments?
+BE EXTREMELY CRITICAL. Check ALL of these (each missing item reduces score):
 
-Score honestly:
-- 0.9-1.0: Excellent (complete, optimized, has tests, professional)
-- 0.7-0.8: Good (works well, could be better optimized)
-- 0.5-0.6: Acceptable (works but missing tests/optimization)
-- 0.3-0.4: Poor (incomplete, has TODOs, inefficient)
-- 0.0-0.2: Very poor (just template/skeleton)
+MUST HAVE (or score < 0.4):
+✓ Complete working implementation (NO placeholders, NO "TODO", NO "implement this")
+✓ Handles edge cases (empty input, null, negative numbers, etc.)
+✓ Main method or test cases with ACTUAL examples
+✓ Proper error handling
 
-Reply with ONLY the numeric score (e.g., 0.75)"""
+SHOULD HAVE (or score < 0.6):
+✓ Optimized algorithm (O(N) not O(N²), efficient data structures)
+✓ Comprehensive comments/documentation
+✓ Professional code structure (proper indentation, naming)
+✓ Input validation
+
+EXCELLENT CODE (0.8+):
+✓ Multiple test cases covering edge cases
+✓ Best time/space complexity possible
+✓ Clean, production-ready code
+✓ Detailed docstrings/javadocs
+
+SCORING RULES:
+- 0.0-0.2: Just skeleton/template, no real implementation
+- 0.3-0.4: Partial implementation, missing key features, has TODOs
+- 0.5-0.6: Works but naive/inefficient, missing tests, incomplete
+- 0.7-0.8: Good implementation, could improve optimization/tests
+- 0.9-1.0: Perfect - optimized, tested, production-ready, handles all cases
+
+DEDUCT HEAVILY FOR:
+- Missing test cases: -0.3
+- Inefficient algorithm (O(N²) when O(N) possible): -0.2
+- No error handling: -0.2
+- TODO/placeholders: -0.4
+- No edge case handling: -0.2
+
+Reply with ONLY the numeric score (e.g., 0.45). BE HARSH!
             
             # Handle different LLM interfaces (using judge_llm instead of self.llm)
             if callable(self.judge_llm):
@@ -451,25 +470,34 @@ Reply with ONLY the numeric score (e.g., 0.75)"""
             if 'error' not in code_lower and 'exception' not in code_lower and len(output) > 300:
                 optimizations.append("add proper error handling")
             
-            # Build comprehensive feedback
+            # Build DEMANDING comprehensive feedback
             all_suggestions = issues + optimizations
             
             if all_suggestions:
-                # Prioritize: implementation > tests > optimization
-                priority_feedback = all_suggestions[:2]  # Top 2 suggestions
-                feedback = f"Improve{lang_hint}: {'; '.join(priority_feedback)}"
+                # Prioritize: implementation > tests > optimization > error handling
+                priority_feedback = all_suggestions[:3]  # Top 3 critical suggestions
+                feedback = f"CRITICAL IMPROVEMENTS REQUIRED{lang_hint}: {'; '.join(priority_feedback)}. Make it PRODUCTION-READY!"
             else:
-                feedback = f"Enhance{lang_hint}: optimize algorithm for better space/time complexity, add comprehensive tests, ensure professional code quality"
+                # Even if no obvious issues, push for excellence
+                feedback = f"Enhance{lang_hint}: optimize to O(N) time complexity, add 5+ comprehensive test cases covering edge cases, include detailed comments, add error handling for invalid inputs, use best data structures"
             
-            # Create detailed prompt for enhancement
-            prompt = f"""The previous code scored {score:.2f}/1.0 (below 0.75 threshold).
+            # Create CRITICAL and DEMANDING prompt for enhancement
+            prompt = f"""The previous code scored {score:.2f}/1.0 which is FAR BELOW acceptable quality (threshold: 0.75).
 
 Task: {task}
 
-Current issues: {feedback}
+CRITICAL FLAWS IDENTIFIED: {feedback}
 
-Provide ONE specific, actionable instruction to generate the BEST version of this code{lang_hint}.
-Consider: algorithm efficiency (O(N) vs O(N²)), code elegance, professional practices, comprehensive tests."""
+Your job: Provide ONE SPECIFIC, ACTIONABLE enhancement instruction{lang_hint} that will DRAMATICALLY improve this code to production quality (0.85+).
+
+Focus on the MOST CRITICAL issue in this priority order:
+1. Complete implementation (eliminate ALL TODOs/placeholders)
+2. Add comprehensive test cases (5+ examples with edge cases)
+3. Optimize algorithm (O(N) time, minimal space)
+4. Add robust error handling (validate inputs, handle edge cases)
+5. Professional code (comments, structure, best practices)
+
+Be SPECIFIC. Example: "Add test cases for: empty array, single element, negative numbers, large inputs (>10000), and add main() method with all examples."""
             
             # Handle different LLM interfaces (using judge_llm)
             if callable(self.judge_llm):
