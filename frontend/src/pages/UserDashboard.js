@@ -355,62 +355,46 @@ function UserDashboard({ user, onLogout }) {
           
           {currentResult ? (
             <>
-              {/* Code Section - Stacked code display: Initial on top, Final below */}
-              <div className="code-section">
-                {(() => {
-                  // Check if we have a message with comparison data
-                  const comparisonMsg = messages.find(msg => msg.showComparison);
-                  if (comparisonMsg) {
-                    return (
-                      <div className="code-comparison-stacked">
-                        {/* Initial Code Block - Top */}
-                        <div className="code-block-stacked">
-                          <h3>📝 Initial Code (Score: {initialResult?.predicted_score.toFixed(2) || '0.00'})</h3>
-                          <div className="code-display white">
-                            <pre>{comparisonMsg.initialCode || 'No initial code'}</pre>
-                          </div>
-                        </div>
-                        
-                        {/* Enhanced Code Block - Bottom */}
-                        <div className="code-block-stacked">
-                          <h3 className="enhanced-title">✨ Final Enhanced Code (Score: {currentResult.predicted_score.toFixed(2)})</h3>
-                          <div className="code-display white enhanced">
-                            <pre>{comparisonMsg.finalCode || 'No enhanced code'}</pre>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  } else if (showEnhancedCode && initialResult) {
-                    return (
-                      <div className="code-comparison-stacked">
-                        {/* Initial Code Block - Top */}
-                        <div className="code-block-stacked">
-                          <h3>📝 Initial Code (Score: {initialResult.predicted_score.toFixed(2)})</h3>
-                          <div className="code-display white">
-                            <pre>{initialResult.code || initialResult.result || 'No code'}</pre>
-                          </div>
-                        </div>
-                        
-                        {/* Enhanced Code Block - Bottom */}
-                        <div className="code-block-stacked">
-                          <h3 className="enhanced-title">✨ Final Enhanced Code (Score: {currentResult.predicted_score.toFixed(2)})</h3>
-                          <div className="code-display white enhanced">
-                            <pre>{currentResult.code || currentResult.result || 'No code'}</pre>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  } else {
-                    return (
-                      <>
-                        <h3>💻 Complete Generated Code</h3>
-                        <div className="code-display white">
-                          <pre>{currentResult.code || currentResult.result || 'No code generated'}</pre>
-                        </div>
-                      </>
-                    );
-                  }
-                })()}
+              {/* ChatGPT-Style Code Display - Simple and Clean */}
+              <div className="chatgpt-code-section">
+                {/* Initial Code - Full Width on Top */}
+                {initialResult && (
+                  <div className="chatgpt-code-block">
+                    <div className="chatgpt-code-header">
+                      <h3>📝 Initial Generated Code</h3>
+                      <span className="chatgpt-score">Score: {initialResult.predicted_score.toFixed(2)}</span>
+                    </div>
+                    <div className="chatgpt-code-content">
+                      <pre>{initialResult.code || initialResult.result || 'No code generated'}</pre>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Enhanced Code - Full Width Below */}
+                {showEnhancedCode && currentResult && (
+                  <div className="chatgpt-code-block enhanced">
+                    <div className="chatgpt-code-header">
+                      <h3>✨ Enhanced Code</h3>
+                      <span className="chatgpt-score enhanced">Score: {currentResult.predicted_score.toFixed(2)}</span>
+                    </div>
+                    <div className="chatgpt-code-content">
+                      <pre>{currentResult.code || currentResult.result || 'No code generated'}</pre>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Single Code Display if no enhancement */}
+                {!showEnhancedCode && !initialResult && currentResult && (
+                  <div className="chatgpt-code-block">
+                    <div className="chatgpt-code-header">
+                      <h3>💻 Generated Code</h3>
+                      <span className="chatgpt-score">Score: {currentResult.predicted_score.toFixed(2)}</span>
+                    </div>
+                    <div className="chatgpt-code-content">
+                      <pre>{currentResult.code || currentResult.result || 'No code generated'}</pre>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Performance Indicators & Charts Section */}

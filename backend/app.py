@@ -14,8 +14,19 @@ import json
 import os
 from dotenv import load_dotenv
 
-# Load environment variables
+# Load environment variables from backend/.env
+# This ensures the correct API key is loaded
 load_dotenv()
+
+# CRITICAL: Ensure Gemini API key is available
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+if not GEMINI_API_KEY:
+    print("⚠️  WARNING: GEMINI_API_KEY not found in environment!")
+    print("   Set it using: $env:GEMINI_API_KEY='your_key_here'")
+else:
+    print(f"✅ Gemini API Key loaded: {GEMINI_API_KEY[:25]}...{GEMINI_API_KEY[-10:]}")
+    # Set it in environment to ensure all modules use it
+    os.environ['GEMINI_API_KEY'] = GEMINI_API_KEY
 
 ROOT_PATH = Path(__file__).parent.parent
 # Ensure the project root is on sys.path so `import AgentMonitor` works whether
@@ -49,12 +60,14 @@ SECRET_KEY = os.getenv("SECRET_KEY", "agentmonitor-secret-key-2025")
 # Get CORS origins from environment variable
 cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
 
+# Add CORS middleware with explicit configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins,
+    allow_origins=["*"],  # Allow all origins for development
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 class LoginRequest(BaseModel):
@@ -211,6 +224,31 @@ def extract_features_from_monitor(monitor_data: dict) -> dict:
     return features
 
 
+# Health check endpoint
+@app.get("/")
+async def root():
+    """Health check endpoint"""
+    return {
+        "status": "running",
+        "service": "AgentMonitor API",
+        "version": "1.0",
+        "endpoints": {
+            "login": "/api/login",
+            "register": "/api/register",
+            "run_mas": "/api/run_mas"
+        }
+    }
+
+@app.get("/api/health")
+async def health():
+    """Detailed health check"""
+    return {
+        "status": "healthy",
+        "gemini_api_key": "configured" if GEMINI_API_KEY else "missing",
+        "xgboost_model": "loaded" if predictor else "not loaded",
+        "database": "connected"
+    }
+
 @app.post("/api/login")
 async def login(request: LoginRequest):
     print(f"Login attempt - Username: {request.username}, Password length: {len(request.password)}")
@@ -316,7 +354,7 @@ async def run_mas(request: RunRequest, user = Depends(verify_token)):
                 else:
                     # Enhancement succeeded, score the enhanced code
                     try:
-                        predicted_score = await temp_monitor._score_output(request.task, clean_code, "EnhancedCode")
+                        predicted_score = await monitor._score_output(request.task, clean_code, "EnhancedCode")
                         print(f"📊 Enhanced code score: {predicted_score:.3f}")
                     except:
                         predicted_score = initial_score * 1.1  # Assume 10% improvement

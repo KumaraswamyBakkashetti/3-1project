@@ -70,20 +70,24 @@ class GroqAPI:
         prompt: str, 
         model: Optional[str] = None,
         temperature: float = 0.3,
-        max_tokens: int = 200
+        max_tokens: int = 200,
+        max_retries: int = 3
     ) -> str:
         """
-        Call Groq API
+        Call Groq API with automatic retry on connection errors
         
         Args:
             prompt: Input prompt
             model: Model name (default: llama-3.1-8b-instant)
             temperature: Creativity (0.0-1.0)
             max_tokens: Max response length
+            max_retries: Number of retry attempts (default: 3)
             
         Returns:
             Model response text
         """
+        import time
+        
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
@@ -96,34 +100,58 @@ class GroqAPI:
             "max_tokens": max_tokens
         }
         
-        try:
-            response = requests.post(
-                self.base_url,
-                headers=headers,
-                json=payload,
-                timeout=30
-            )
-            
-            if response.status_code == 200:
-                return response.json()["choices"][0]["message"]["content"]
-            elif response.status_code == 429:
-                # Rate limit exceeded
-                print("⚠️ Groq rate limit exceeded (30 req/min), using fallback")
-                return ""
-            elif response.status_code == 401:
-                # Invalid API key
-                print("❌ Groq API key invalid! Check GROQ_API_KEY in .env")
-                return ""
-            else:
-                print(f"⚠️ Groq API error {response.status_code}: {response.text}")
-                return ""
+        for attempt in range(max_retries):
+            try:
+                response = requests.post(
+                    self.base_url,
+                    headers=headers,
+                    json=payload,
+                    timeout=30
+                )
                 
-        except requests.exceptions.Timeout:
-            print("⚠️ Groq API timeout")
-            return ""
-        except Exception as e:
-            print(f"⚠️ Groq API call failed: {e}")
-            return ""
+                if response.status_code == 200:
+                    return response.json()["choices"][0]["message"]["content"]
+                elif response.status_code == 429:
+                    # Rate limit exceeded - wait and retry
+                    wait_time = min(2 ** attempt, 5)
+                    print(f"⚠️ Groq rate limit (30 req/min), retrying in {wait_time}s... ({attempt+1}/{max_retries})")
+                    time.sleep(wait_time)
+                    continue
+                elif response.status_code == 401:
+                    # Invalid API key - don't retry
+                    print("❌ Groq API key invalid! Check GROQ_API_KEY in .env")
+                    return ""
+                else:
+                    print(f"⚠️ Groq API error {response.status_code}: {response.text[:100]}")
+                    if attempt < max_retries - 1:
+                        time.sleep(1)
+                        continue
+                    return ""
+                    
+            except requests.exceptions.Timeout:
+                print(f"⚠️ Groq API timeout (attempt {attempt+1}/{max_retries})")
+                if attempt < max_retries - 1:
+                    time.sleep(1)
+                    continue
+                return ""
+            except requests.exceptions.ConnectionError as e:
+                # Connection aborted, remote disconnected, etc.
+                print(f"⚠️ Groq connection error (attempt {attempt+1}/{max_retries}): {str(e)[:80]}")
+                if attempt < max_retries - 1:
+                    wait_time = min(2 ** attempt, 5)
+                    print(f"   Retrying in {wait_time}s...")
+                    time.sleep(wait_time)
+                    continue
+                return ""
+            except Exception as e:
+                print(f"⚠️ Groq API call failed (attempt {attempt+1}/{max_retries}): {str(e)[:100]}")
+                if attempt < max_retries - 1:
+                    time.sleep(1)
+                    continue
+                return ""
+        
+        print(f"❌ Groq API failed after {max_retries} retries, using fallback scoring")
+        return ""
     
     def __call__(self, prompt: str) -> str:
         """

@@ -442,18 +442,19 @@
   cursor: not-allowed;
 }
 
-/* Right Panel - Details (Toggleable) */
+/* Right Panel - Details (Toggleable) - FULL WIDTH ChatGPT-style */
 .details-panel {
   position: fixed;
   right: 0;
   top: 80px;
   bottom: 80px;
-  width: 50%;
-  background: #f9f9f9;
+  width: 95% !important; /* Almost full width for maximum readability */
+  max-width: none !important;
+  background: #ffffff;
   box-shadow: -4px 0 12px rgba(0,0,0,0.15);
   overflow-y: auto;
-  padding: 1.5rem;
-  gap: 1.5rem;
+  padding: 2rem 3rem !important;
+  gap: 2rem !important;
   z-index: 100;
   transform: translateX(100%);
   transition: transform 0.3s ease;
@@ -533,21 +534,29 @@
 
 /* NEW: Stacked code layout - Initial on top, Final below */
 .code-comparison-stacked {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2rem !important;
+  margin-bottom: 2rem !important;
+  width: 100% !important;
 }
 
 .code-block-stacked {
-  width: 100%;
+  width: 100% !important;
+  margin-bottom: 0 !important;
 }
 
 .code-block-stacked h3 {
-  font-size: 1.1rem;
-  margin-bottom: 0.75rem;
-  padding-left: 0.5rem;
-  border-left: 4px solid #667eea;
+  font-size: 1.2rem !important;
+  margin-bottom: 1rem !important;
+  padding-left: 0.75rem !important;
+  border-left: 5px solid #667eea !important;
+  color: #1f2937 !important;
+  font-weight: 600 !important;
+}
+
+.code-block-stacked h3.enhanced-title {
+  border-left-color: #10b981 !important;
 }
 
 .code-column {
@@ -563,32 +572,35 @@
   background: #ffffff;
   border: 1px solid #d9d9e3;
   border-radius: 8px;
-  padding: 1.5rem;
+  padding: 2rem !important;
   overflow-x: auto;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
   margin-bottom: 1.5rem;
-  max-height: 70vh;  /* Increased from 600px to 70% of viewport height */
-  min-height: 400px; /* Ensure minimum readable height */
+  max-height: 90vh !important;  /* Increased from 85vh to use even more vertical space */
+  min-height: 600px !important; /* Increased from 500px for much better code visibility */
   overflow-y: auto;
+  width: 100% !important;
 }
 
 .code-display.white {
-  background: #ffffff;
+  background: #ffffff !important;
 }
 
 .code-display.enhanced {
-  border: 2px solid #667eea;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+  border: 2px solid #10b981 !important;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.25) !important;
+  background: #f0fdf4 !important;
 }
 
 .code-display pre {
-  margin: 0;
-  color: #1f2937;
-  font-family: 'Consolas', 'Monaco', 'Courier New', 'Menlo', monospace;
-  font-size: 1rem;     /* Increased from 0.95rem to 1rem */
-  line-height: 1.8;    /* Increased from 1.7 to 1.8 for better readability */
-  white-space: pre-wrap;
-  word-wrap: break-word;
+  margin: 0 !important;
+  color: #1f2937 !important;
+  font-family: 'Consolas', 'Monaco', 'Courier New', 'Menlo', monospace !important;
+  font-size: 1.05rem !important;     /* Increased from 1rem for better readability */
+  line-height: 1.9 !important;       /* Increased from 1.8 for more breathing room */
+  white-space: pre-wrap !important;
+  word-wrap: break-word !important;
+  tab-size: 2 !important;
 }
 
 /* Indicators */
@@ -909,6 +921,119 @@ button[type="submit"]:disabled {
   cursor: pointer;
   font-weight: 500;
 }
+
+/* ================================
+   ChatGPT-Style Code Display
+   ================================ */
+
+/* Container for all code blocks */
+.chatgpt-code-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  width: 100%;
+  padding: 1rem;
+  max-width: 100%;
+}
+
+/* Individual code block (like a ChatGPT message) */
+.chatgpt-code-block {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.chatgpt-code-block:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* Enhanced code block gets green accent */
+.chatgpt-code-block.enhanced {
+  border-color: #10b981;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+}
+
+/* Header with title and score */
+.chatgpt-code-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.chatgpt-code-block.enhanced .chatgpt-code-header {
+  background: linear-gradient(90deg, #ecfdf5 0%, #f9fafb 100%);
+  border-bottom-color: #d1fae5;
+}
+
+.chatgpt-code-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.chatgpt-code-block.enhanced .chatgpt-code-header h3 {
+  color: #065f46;
+}
+
+.chatgpt-score {
+  padding: 0.5rem 1.25rem;
+  background: #667eea;
+  color: white;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.chatgpt-score.enhanced {
+  background: #10b981;
+}
+
+/* Code content area */
+.chatgpt-code-content {
+  padding: 0;
+  background: #1e1e1e;
+  max-height: none;
+  overflow-x: auto;
+}
+
+.chatgpt-code-content pre {
+  margin: 0;
+  padding: 2rem;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-x: auto;
+  white-space: pre;
+  min-height: 200px;
+}
+
+/* Scrollbar styling for code */
+.chatgpt-code-content::-webkit-scrollbar {
+  height: 8px;
+}
+
+.chatgpt-code-content::-webkit-scrollbar-track {
+  background: #2d2d2d;
+}
+
+.chatgpt-code-content::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 4px;
+}
+
+.chatgpt-code-content::-webkit-scrollbar-thumb:hover {
+  background: #777;
+}
+
 
 .modal-content button:hover {
   background: #5568d3;

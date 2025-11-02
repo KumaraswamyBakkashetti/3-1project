@@ -62,24 +62,34 @@ class CodeGenerationMAS:
         if self.language and self.language not in ['auto', 'any']:
             lang_hint = f"""
 
-IMPORTANT - Generate the BEST {self.language} implementation:
-✓ Most efficient algorithm (optimize space/time complexity)
-✓ Clean, professional code structure
-✓ Complete implementation (NO TODO/placeholders)
-✓ Comprehensive test cases in main method
-✓ Proper error handling
-✓ Clear comments and documentation
-✓ Follow {self.language} best practices"""
+CRITICAL REQUIREMENTS for {self.language} code generation:
+🚫 DO NOT generate .env files, configuration files, or environment variables
+✅ Generate ACTUAL EXECUTABLE CODE with imports and functions
+✅ Complete working implementation (NO TODO/placeholders)
+✅ Include all necessary imports/requires at the top
+✅ Write the main logic function
+✅ Add error handling and edge cases
+✅ Include example usage or test cases
+✅ Use best practices for {self.language}
+✅ Optimize algorithm efficiency
+
+EXAMPLE FORMAT:
+- For MongoDB: require('mongoose'), connection function, error handling, example usage
+- For API: imports, route definitions, handlers, middleware, example
+- For algorithm: function definition, implementation, test cases
+
+Generate COMPLETE, RUNNABLE {self.language} code!"""
         else:
             lang_hint = f"""
 
-IMPORTANT - Generate the BEST implementation:
-✓ Most efficient algorithm (optimize space/time complexity)
-✓ Clean, professional code structure
-✓ Complete implementation (NO TODO/placeholders)
-✓ Comprehensive test cases in main method
-✓ Proper error handling
-✓ Clear comments and documentation"""
+CRITICAL REQUIREMENTS:
+🚫 DO NOT generate .env files, configuration files, or environment variables
+✅ Generate ACTUAL EXECUTABLE CODE
+✅ Complete working implementation (NO TODO/placeholders)
+✅ Include all necessary imports
+✅ Write the main logic
+✅ Add error handling
+✅ Include test cases"""
         
         if not self.use_full_mas:
             # FAST MODE: Coder only for speed
@@ -492,31 +502,82 @@ class Agent:
             lang_directive = ''
             if self.language and self.language not in ['auto', 'any']:
                 lang_directive = f"""LANGUAGE: {self.language.upper()}
-GOAL: Generate the MOST EFFICIENT, PROFESSIONAL {self.language.upper()} code.
 
-REQUIREMENTS:
-- Use optimal algorithm (consider O(N) vs O(N²) space/time complexity)
-- Complete implementation (NO TODO/placeholders)
-- Include comprehensive test cases
-- Add error handling and edge cases
-- Use professional coding standards
-- Add clear comments
+⚠️ CRITICAL: Generate COMPLETE, WORKING {self.language.upper()} CODE - NOT configuration files!
+
+🚫 NEVER GENERATE:
+- .env files or environment variables (MONGODB_URI="...", PORT=...)
+- Configuration objects without code
+- Just comments or documentation
+- Placeholder files
+
+✅ ALWAYS GENERATE:
+- Actual executable {self.language.upper()} code
+- Import/require statements at the top
+- Function definitions with REAL implementation
+- Error handling (try-catch, if-else checks)
+- Example usage or test cases at the bottom
+- Complete working solution
+
+ABSOLUTE REQUIREMENTS:
+✓ Start with imports (const express = require('express'))
+✓ COMPLETE implementation (every function FULLY coded)
+✓ NO "TODO" comments anywhere
+✓ NO placeholder functions
+✓ Real working algorithm (not empty shells)
+✓ Include actual test/usage examples
+✓ Add error handling for edge cases
+✓ Optimize for O(N) time complexity where possible
+✓ Follow {self.language.upper()} best practices
+
+EXAMPLES OF UNACCEPTABLE OUTPUT:
+❌ MONGODB_URI="mongodb://localhost:27017/db"
+❌ PORT=3000
+❌ function solution() {{ // TODO: Implement }}
+❌ // Configuration file for MongoDB
+
+REQUIRED FORMAT EXAMPLE (MongoDB connection):
+```{self.language}
+const express = require('express');
+const mongoose = require('mongoose');
+
+// MongoDB connection function
+async function connectDB() {{
+  try {{
+    await mongoose.connect('mongodb://localhost:27017/mydb');
+    console.log('Connected to MongoDB');
+  }} catch (err) {{
+    console.error('Connection failed:', err);
+  }}
+}}
+
+// Example usage
+connectDB();
+```
+
+Write the ACTUAL, COMPLETE, EXECUTABLE {self.language.upper()} CODE!
 
 """
             else:
-                lang_directive = f"""GOAL: Generate the MOST EFFICIENT, PROFESSIONAL code.
+                lang_directive = f"""⚠️ CRITICAL: Generate COMPLETE, WORKING CODE - NOT configuration!
 
-REQUIREMENTS:
-- Use optimal algorithm (minimize space/time complexity)
-- Complete implementation (NO TODO/placeholders)
-- Include comprehensive test cases
-- Add error handling
-- Professional coding standards
+🚫 NEVER GENERATE environment variables or config files
+✅ ALWAYS GENERATE actual executable code with imports and functions
+
+ABSOLUTE REQUIREMENTS:
+✓ COMPLETE implementation (every function FULLY implemented)
+✓ NO "TODO" comments
+✓ NO placeholder functions
+✓ Real working algorithm
+✓ Include actual test cases
+✓ Add error handling
+
+REQUIRED: Write the ACTUAL, COMPLETE, EXECUTABLE CODE!
 
 """
 
-            # Concise final instruction
-            full_prompt = f"{lang_directive}{prompt}\n\nProvide ONLY the optimized, production-ready code. No explanations."
+            # Concise final instruction with emphasis
+            full_prompt = f"{lang_directive}{prompt}\n\n⚡ IMPORTANT: Generate EXECUTABLE {self.language.upper()} CODE with imports, functions, and logic. NOT just environment variables or config!"
             
             start = __import__('time').time()
             
@@ -539,6 +600,22 @@ REQUIREMENTS:
                 
                 # EXTRACT ONLY CODE
                 clean_code = self._extract_code(response_str)
+                
+                # POST-PROCESS: Check for TODO/placeholders and REJECT
+                if self._has_placeholders(clean_code):
+                    print(f"[{self.name}] ❌ REJECTED: Code contains TODOs/placeholders!")
+                    print(f"[{self.name}] Requesting complete implementation...")
+                    # Try again with even stricter prompt
+                    retry_prompt = f"{lang_directive}{prompt}\n\n🚫 YOUR PREVIOUS ATTEMPT HAD TODO COMMENTS - THIS IS UNACCEPTABLE!\n\nGenerate the ACTUAL COMPLETE working code with REAL implementation. NO TODOs!"
+                    retry_response = self.llm(retry_prompt)
+                    retry_str = retry_response if isinstance(retry_response, str) else str(retry_response)
+                    clean_code = self._extract_code(retry_str)
+                    
+                    # If still has TODOs, return empty (will trigger fallback)
+                    if self._has_placeholders(clean_code):
+                        print(f"[{self.name}] ❌ STILL HAS TODOs after retry - returning empty")
+                        return ""
+                
                 print(f"[{self.name}] {elapsed:.1f}s -> {len(clean_code)} chars")
                 
                 # Check if extraction resulted in nothing
@@ -553,6 +630,68 @@ REQUIREMENTS:
         except Exception as e:
             print(f"[{self.name}] Exception: {str(e)}")
             return ""  # Return empty, not error message
+    
+    def _has_placeholders(self, code: str) -> bool:
+        """Check if code contains TODO comments, placeholder patterns, or just config"""
+        if not code:
+            return True
+        
+        # If code is too short (< 100 chars), likely incomplete
+        if len(code.strip()) < 100:
+            print(f"[PLACEHOLDER CHECK] Code too short: {len(code.strip())} chars")
+            return True
+        
+        code_lower = code.lower()
+        code_stripped = code.strip()
+        
+        # Check if it's just environment variables (not actual code)
+        env_patterns = [
+            'mongodb_uri=',
+            'port=',
+            'db_url=',
+            'api_key=',
+            'database_url='
+        ]
+        
+        # If code ONLY contains env variables and no actual code
+        has_env_only = any(pattern in code_lower for pattern in env_patterns)
+        has_code_markers = any(marker in code_lower for marker in [
+            'function', 'const ', 'let ', 'var ', 'def ', 'class ', 
+            'import ', 'require(', 'async ', 'await ', 'try {', 'catch'
+        ])
+        
+        if has_env_only and not has_code_markers:
+            print(f"[PLACEHOLDER CHECK] Code is just environment variables, not actual code!")
+            return True
+            
+        placeholder_patterns = [
+            'todo',
+            'todo:',
+            'implement this',
+            'implement the',
+            '// implement',
+            '# implement',
+            '/* todo',
+            'pass  # ',
+            'return null  //',
+            'return null;  //',
+            '{ // todo',
+            '{ /* todo',
+            'function solution()',  # Generic placeholder function name
+            'def solution():',       # Generic placeholder function name
+            '// ...implementation',
+            '# ...implementation',
+            'your code here',
+            'write code here',
+            'add code here'
+        ]
+        
+        for pattern in placeholder_patterns:
+            if pattern in code_lower:
+                print(f"[PLACEHOLDER CHECK] Found pattern: '{pattern}'")
+                return True
+        
+        return False
     
     def _extract_code(self, response_str: str) -> str:
         """Extract ONLY code from response"""

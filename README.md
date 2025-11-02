@@ -12,42 +12,59 @@
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.10+
-- Node.js 16+
-- MongoDB (local or cloud)
-- Gemini API key ([Get it FREE](https://makersuite.google.com/app/apikey))
-- Groq API key ([Get it FREE](https://console.groq.com/keys))
+- **Python 3.10+** - [Download](https://www.python.org/downloads/)
+- **Node.js 16+** - [Download](https://nodejs.org/)
+- **Gemini API Key** - [Get FREE](https://makersuite.google.com/app/apikey)
+- **Groq API Key** - [Get FREE](https://console.groq.com/keys)
 
-### Installation
+### One-Command Startup
+
+```powershell
+# Simply run this command in the project root:
+.\START_PROJECT.ps1
+```
+
+This will automatically:
+- ✅ Check Python and Node.js installation
+- ✅ Set up environment variables
+- ✅ Start backend server (port 8080)
+- ✅ Start frontend server (port 3000)
+- ✅ Open your browser to http://localhost:3000
+
+### Manual Setup (Alternative)
+
+If you prefer manual control:
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/KumaraswamyBakkashetti/3-1project.git
-cd 3-1project
-
-# 2. Backend setup
+# 1. Install Python dependencies
 cd backend
-python -m venv venv
-venv\Scripts\activate  # Windows
-# source venv/bin/activate  # Linux/Mac
 pip install -r requirements.txt
 
-# 3. Frontend setup
+# 2. Install Node dependencies
 cd ../frontend
 npm install
 
-# 4. Configure environment
-cp .env.example .env
-# Edit .env with your API keys
+# 3. Configure API keys
+# Edit backend/.env and add your keys:
+GEMINI_API_KEY=your_gemini_key_here
+GROQ_API_KEY=your_groq_key_here
+
+# 4. Start Backend (Terminal 1)
+cd backend
+python app.py
+
+# 5. Start Frontend (Terminal 2)
+cd frontend
+npm start
 ```
 
-### Run the System
+### First Time Access
 
-```bash
-# Terminal 1: Start MongoDB
-mongod
-
-# Terminal 2: Start Backend
+1. Open http://localhost:3000
+2. **Register** a new account (username + password)
+3. **Login** with your credentials
+4. Submit a code generation task
+5. Watch the magic happen! ✨
 cd backend
 python app.py
 # Backend running at http://localhost:8080

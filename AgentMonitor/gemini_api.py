@@ -27,14 +27,27 @@ class GeminiKeyManager:
     def _load_api_keys(self):
         """Load all GEMINI_API_KEY_* from environment"""
         keys = []
+        
+        # Try single key first (GEMINI_API_KEY)
+        single_key = os.getenv('GEMINI_API_KEY')
+        if single_key:
+            keys.append(single_key)
+            print(f"[INFO] Loaded primary GEMINI_API_KEY")
+        
+        # Then try numbered keys (only valid ones)
         i = 1
-        while True:
+        while i <= 5:  # Max 5 keys
             key = os.getenv(f'GEMINI_API_KEY_{i}')
-            if key:
+            if key and key.strip() and len(key) > 20:  # Basic validation
                 keys.append(key)
-                i += 1
-            else:
-                break
+                print(f"[INFO] Loaded GEMINI_API_KEY_{i}")
+            i += 1
+        
+        if not keys:
+            print("[WARNING] No valid Gemini API keys found!")
+        else:
+            print(f"[INFO] Total valid API keys loaded: {len(keys)}")
+        
         return keys
     
     def _configure_current_key(self):
@@ -46,25 +59,36 @@ class GeminiKeyManager:
         else:
             raise Exception("All API keys exhausted")
     
-    def rotate_key(self):
+    def rotate_key(self, mark_failed=True):
         """Switch to next available API key"""
-        self.failed_keys.add(self.current_key_index)
+        if mark_failed:
+            self.failed_keys.add(self.current_key_index)
+        
+        old_index = self.current_key_index
         self.current_key_index += 1
         
         # Try to find next working key
         while self.current_key_index < len(self.api_keys):
             if self.current_key_index not in self.failed_keys:
                 self._configure_current_key()
+                print(f"[SUCCESS] Switched from key #{old_index + 1} to key #{self.current_key_index + 1}")
                 return True
             self.current_key_index += 1
         
-        # All keys exhausted
-        return False
+        # All keys exhausted - reset to first key and mark all as available
+        print(f"[WARNING] All {len(self.api_keys)} keys tried, resetting to key #1")
+        self.current_key_index = 0
+        self.failed_keys.clear()  # Give all keys another chance
+        self._configure_current_key()
+        return True  # Always return True to keep trying
     
-    def call_gemini(self, prompt, model_name="gemini-2.5-flash", timeout=20):
+    def call_gemini(self, prompt, model_name="gemini-2.5-flash", timeout=60):
         """Call Gemini with timeout and speed optimization"""
-        max_retries = min(3, len(self.api_keys))
+        # Try each API key at least once (max 5 retries total)
+        max_retries = min(5, len(self.api_keys) * 2)  # 2 attempts per key
         original_prompt = prompt
+        
+        print(f"[INIT] Starting request with {len(self.api_keys)} API keys available, {max_retries} max retries")
         
         for attempt in range(max_retries):
             try:
@@ -75,12 +99,18 @@ class GeminiKeyManager:
                     prompt = prompt.replace("Code", "Solution")
                     prompt = prompt.replace("LANGUAGE:", "Format:")
                     prompt = f"Provide a programming solution:\n\n{prompt}"
+                    
+                    # Exponential backoff - wait longer between retries
+                    wait_time = min(2 ** attempt, 5)  # Max 5 seconds
+                    print(f"[INFO] Retry {attempt}/{max_retries} after {wait_time}s wait...")
+                    time.sleep(wait_time)
                 
                 # Use gemini-2.5-flash - latest stable fast model (October 2025)
                 # This works with your new API keys and v1beta API
                 
-                # Import safety enums
+                # Import safety enums and configure request options with timeout
                 from google.generativeai.types import HarmCategory, HarmBlockThreshold
+                import google.generativeai.types as types
                 
                 # Safety settings - prevent blocking for code generation
                 safety_settings = {
@@ -102,9 +132,13 @@ class GeminiKeyManager:
                     "top_k": 20,                   # Limit token selection
                 }
                 
+                # Add request options with timeout (prevents 600s hangs)
+                request_options = types.RequestOptions(timeout=timeout)
+                
                 response = model.generate_content(
                     prompt,
-                    generation_config=generation_config
+                    generation_config=generation_config,
+                    request_options=request_options
                 )
                 
                 # Try to access response.text safely
@@ -160,29 +194,55 @@ class GeminiKeyManager:
             except Exception as e:
                 error_msg = str(e).lower()
                 
-                # Check for specific error types
-                if "invalid operation" in error_msg or "response.text" in error_msg:
-                    # Response structure issue - try rotating key
-                    print(f"[WARNING] Invalid response structure: {e}")
-                    if self.rotate_key():
+                # PRIORITY 1: Rate limit / Quota errors - IMMEDIATELY switch key
+                if any(err in error_msg for err in ["quota", "429", "rate limit", "resource exhausted", "resource_exhausted"]):
+                    print(f"[RATE LIMIT] API key #{self.current_key_index + 1} quota exceeded!")
+                    if self.rotate_key(mark_failed=True):
+                        print(f"[AUTO-SWITCH] Retrying with new API key...")
                         time.sleep(0.5)
                         continue
                     else:
-                        print(f"[ERROR] Invalid API response, all keys tried")
-                        return ""  # Return empty, not error message
+                        print(f"[ERROR] All API keys have rate limits")
+                        return ""
                 
-                # Quota error - rotate
-                if "quota" in error_msg or "429" in error_msg or "rate limit" in error_msg:
-                    if self.rotate_key():
+                # PRIORITY 2: Timeout errors - try different key
+                if "timeout" in error_msg or "timed out" in error_msg or "deadline exceeded" in error_msg:
+                    print(f"[TIMEOUT] Request timed out on attempt {attempt + 1}/{max_retries}")
+                    if self.rotate_key(mark_failed=False):  # Don't mark as permanently failed
+                        print(f"[AUTO-SWITCH] Trying different API key...")
+                        time.sleep(1)
+                        continue
+                    else:
+                        print(f"[ERROR] Timeout with all keys tried")
+                        return ""
+                
+                # PRIORITY 3: 503 service unavailable - retry with backoff
+                if "503" in error_msg or "service unavailable" in error_msg or "failed to connect" in error_msg:
+                    print(f"[503] Gemini service unavailable on attempt {attempt + 1}/{max_retries}")
+                    wait_time = min(2 ** (attempt + 1), 5)
+                    print(f"[BACKOFF] Waiting {wait_time}s before retry...")
+                    time.sleep(wait_time)
+                    # Try next key
+                    if self.rotate_key(mark_failed=False):
+                        continue
+                    else:
+                        print(f"[ERROR] Service unavailable after all retries")
+                        return ""
+                
+                # PRIORITY 4: Invalid response structure
+                if "invalid operation" in error_msg or "response.text" in error_msg:
+                    print(f"[WARNING] Invalid response structure: {str(e)[:100]}")
+                    if self.rotate_key(mark_failed=False):
+                        print(f"[AUTO-SWITCH] Trying different API key...")
                         time.sleep(0.5)
                         continue
                     else:
-                        print(f"[ERROR] All API keys exhausted")
-                        return ""  # Return empty, not error message
-                else:
-                    # Other error - return empty
-                    print(f"[ERROR] API call failed: {error_msg[:100]}")
-                    return ""  # Return empty, not error message
+                        print(f"[ERROR] Invalid API response with all keys")
+                        return ""
+                
+                # PRIORITY 5: Other errors - log and return empty
+                print(f"[ERROR] API call failed: {error_msg[:150]}")
+                return ""
         
         print(f"[ERROR] Failed after {max_retries} retries")
         return ""  # Return empty, not error message

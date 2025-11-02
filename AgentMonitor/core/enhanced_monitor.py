@@ -347,7 +347,7 @@ DEDUCT HEAVILY FOR:
 - TODO/placeholders: -0.4
 - No edge case handling: -0.2
 
-Reply with ONLY the numeric score (e.g., 0.45). BE HARSH!
+Reply with ONLY the numeric score (e.g., 0.45). BE HARSH!"""
             
             # Handle different LLM interfaces (using judge_llm instead of self.llm)
             if callable(self.judge_llm):
@@ -413,7 +413,9 @@ Reply with ONLY the numeric score (e.g., 0.45). BE HARSH!
         if 'return' in code_lower:
             score += 0.02  # Has return statements
             
-        return min(0.85, score)  # Cap at 0.85 for heuristic
+        # IMPORTANT: Cap at 0.65 for heuristic (not 0.85)
+        # This ensures real LLM scoring is preferred when available
+        return min(0.65, score)  # Lower cap encourages proper scoring
     
     async def _generate_enhancement_feedback(
         self,
@@ -482,7 +484,8 @@ Reply with ONLY the numeric score (e.g., 0.45). BE HARSH!
                 feedback = f"Enhance{lang_hint}: optimize to O(N) time complexity, add 5+ comprehensive test cases covering edge cases, include detailed comments, add error handling for invalid inputs, use best data structures"
             
             # Create CRITICAL and DEMANDING prompt for enhancement
-            prompt = f"""The previous code scored {score:.2f}/1.0 which is FAR BELOW acceptable quality (threshold: 0.75).
+            score_str = f"{score:.2f}"
+            prompt = f"""The previous code scored {score_str}/1.0 which is FAR BELOW acceptable quality (threshold: 0.75).
 
 Task: {task}
 
@@ -497,7 +500,7 @@ Focus on the MOST CRITICAL issue in this priority order:
 4. Add robust error handling (validate inputs, handle edge cases)
 5. Professional code (comments, structure, best practices)
 
-Be SPECIFIC. Example: "Add test cases for: empty array, single element, negative numbers, large inputs (>10000), and add main() method with all examples."""
+Be SPECIFIC. Example: Add test cases for empty array, single element, negative numbers, large inputs (>10000), and add main() method with all examples."""
             
             # Handle different LLM interfaces (using judge_llm)
             if callable(self.judge_llm):
