@@ -355,43 +355,61 @@ function UserDashboard({ user, onLogout }) {
           
           {currentResult ? (
             <>
-              {/* ChatGPT-Style Code Display - Simple and Clean */}
-              <div className="chatgpt-code-section">
-                {/* Initial Code - Full Width on Top */}
-                {initialResult && (
-                  <div className="chatgpt-code-block">
-                    <div className="chatgpt-code-header">
-                      <h3>📝 Initial Generated Code</h3>
-                      <span className="chatgpt-score">Score: {initialResult.predicted_score.toFixed(2)}</span>
+              {/* Code Display Section - Matching UserBoard.png Design */}
+              <div className="code-display-section">
+                {/* Side by Side Code Comparison */}
+                {initialResult && showEnhancedCode && currentResult && (
+                  <div className="code-comparison-grid">
+                    {/* Initial Code - Left Side */}
+                    <div className="code-block-container initial">
+                      <div className="code-block-header">
+                        <div className="header-title">
+                          <span className="code-icon">📝</span>
+                          <h3>Initial Generated Code</h3>
+                        </div>
+                        <div className="score-badge initial-score">
+                          Score: {initialResult.predicted_score.toFixed(2)}
+                        </div>
+                      </div>
+                      <div className="code-block-body">
+                        <pre className="code-content">{initialResult.code || initialResult.result || 'No code generated'}</pre>
+                      </div>
                     </div>
-                    <div className="chatgpt-code-content">
-                      <pre>{initialResult.code || initialResult.result || 'No code generated'}</pre>
+
+                    {/* Enhanced Code - Right Side */}
+                    <div className="code-block-container enhanced">
+                      <div className="code-block-header">
+                        <div className="header-title">
+                          <span className="code-icon">✨</span>
+                          <h3>Enhanced Code</h3>
+                        </div>
+                        <div className="score-badge enhanced-score">
+                          Score: {currentResult.predicted_score.toFixed(2)}
+                        </div>
+                      </div>
+                      <div className="code-block-body">
+                        <pre className="code-content">{currentResult.code || currentResult.result || 'No code generated'}</pre>
+                      </div>
                     </div>
                   </div>
                 )}
-                
-                {/* Enhanced Code - Full Width Below */}
-                {showEnhancedCode && currentResult && (
-                  <div className="chatgpt-code-block enhanced">
-                    <div className="chatgpt-code-header">
-                      <h3>✨ Enhanced Code</h3>
-                      <span className="chatgpt-score enhanced">Score: {currentResult.predicted_score.toFixed(2)}</span>
-                    </div>
-                    <div className="chatgpt-code-content">
-                      <pre>{currentResult.code || currentResult.result || 'No code generated'}</pre>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Single Code Display if no enhancement */}
-                {!showEnhancedCode && !initialResult && currentResult && (
-                  <div className="chatgpt-code-block">
-                    <div className="chatgpt-code-header">
-                      <h3>💻 Generated Code</h3>
-                      <span className="chatgpt-score">Score: {currentResult.predicted_score.toFixed(2)}</span>
-                    </div>
-                    <div className="chatgpt-code-content">
-                      <pre>{currentResult.code || currentResult.result || 'No code generated'}</pre>
+
+                {/* Single Code Display - When No Enhancement Yet */}
+                {(!showEnhancedCode || !initialResult) && currentResult && (
+                  <div className="code-comparison-grid single">
+                    <div className="code-block-container">
+                      <div className="code-block-header">
+                        <div className="header-title">
+                          <span className="code-icon">💻</span>
+                          <h3>Generated Code</h3>
+                        </div>
+                        <div className="score-badge">
+                          Score: {currentResult.predicted_score.toFixed(2)}
+                        </div>
+                      </div>
+                      <div className="code-block-body">
+                        <pre className="code-content">{currentResult.code || currentResult.result || 'No code generated'}</pre>
+                      </div>
                     </div>
                   </div>
                 )}

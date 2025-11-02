@@ -923,115 +923,166 @@ button[type="submit"]:disabled {
 }
 
 /* ================================
-   ChatGPT-Style Code Display
+   Code Display Section - UserBoard.png Style
    ================================ */
 
-/* Container for all code blocks */
-.chatgpt-code-section {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
+.code-display-section {
   width: 100%;
-  padding: 1rem;
-  max-width: 100%;
+  margin: 1.5rem 0;
 }
 
-/* Individual code block (like a ChatGPT message) */
-.chatgpt-code-block {
+/* Side-by-side grid layout for code comparison */
+.code-comparison-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  width: 100%;
+  padding: 0.5rem;
+}
+
+/* Single code view (full width) */
+.code-comparison-grid.single {
+  grid-template-columns: 1fr;
+}
+
+/* Individual code block container */
+.code-block-container {
   background: #ffffff;
-  border: 1px solid #e5e7eb;
+  border: 2px solid #e5e7eb;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  max-height: 600px;
 }
 
-.chatgpt-code-block:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+.code-block-container:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
 }
 
-/* Enhanced code block gets green accent */
-.chatgpt-code-block.enhanced {
+/* Initial code styling */
+.code-block-container.initial {
+  border-color: #667eea;
+}
+
+/* Enhanced code styling */
+.code-block-container.enhanced {
   border-color: #10b981;
-  background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+  background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%);
 }
 
-/* Header with title and score */
-.chatgpt-code-header {
+/* Header section with title and score */
+.code-block-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem 2rem;
-  background: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 1.25rem 1.75rem;
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  border-bottom: 2px solid #e5e7eb;
 }
 
-.chatgpt-code-block.enhanced .chatgpt-code-header {
-  background: linear-gradient(90deg, #ecfdf5 0%, #f9fafb 100%);
-  border-bottom-color: #d1fae5;
+.code-block-container.initial .code-block-header {
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  border-bottom-color: #c7d2fe;
 }
 
-.chatgpt-code-header h3 {
+.code-block-container.enhanced .code-block-header {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border-bottom-color: #a7f3d0;
+}
+
+/* Header title with icon */
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.code-icon {
+  font-size: 1.5rem;
+}
+
+.header-title h3 {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 600;
-  color: #111827;
+  color: #1f2937;
 }
 
-.chatgpt-code-block.enhanced .chatgpt-code-header h3 {
-  color: #065f46;
-}
-
-.chatgpt-score {
+/* Score badge */
+.score-badge {
   padding: 0.5rem 1.25rem;
   background: #667eea;
   color: white;
   border-radius: 20px;
-  font-weight: 600;
-  font-size: 0.95rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
 }
 
-.chatgpt-score.enhanced {
+.score-badge.initial-score {
+  background: #667eea;
+}
+
+.score-badge.enhanced-score {
   background: #10b981;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
 }
 
-/* Code content area */
-.chatgpt-code-content {
-  padding: 0;
+/* Code body area */
+.code-block-body {
+  flex: 1;
+  overflow: auto;
   background: #1e1e1e;
-  max-height: none;
-  overflow-x: auto;
 }
 
-.chatgpt-code-content pre {
+/* Code content styling */
+.code-content {
   margin: 0;
-  padding: 2rem;
+  padding: 1.75rem;
   background: #1e1e1e;
   color: #d4d4d4;
   font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 13px;
+  line-height: 1.7;
   overflow-x: auto;
   white-space: pre;
-  min-height: 200px;
+  min-height: 300px;
+  height: 100%;
 }
 
-/* Scrollbar styling for code */
-.chatgpt-code-content::-webkit-scrollbar {
-  height: 8px;
+/* Scrollbar styling for code blocks */
+.code-block-body::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
 }
 
-.chatgpt-code-content::-webkit-scrollbar-track {
+.code-block-body::-webkit-scrollbar-track {
   background: #2d2d2d;
 }
 
-.chatgpt-code-content::-webkit-scrollbar-thumb {
+.code-block-body::-webkit-scrollbar-thumb {
   background: #555;
-  border-radius: 4px;
+  border-radius: 5px;
 }
 
-.chatgpt-code-content::-webkit-scrollbar-thumb:hover {
+.code-block-body::-webkit-scrollbar-thumb:hover {
   background: #777;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 1200px) {
+  .code-comparison-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .code-block-container {
+    max-height: 500px;
+  }
 }
 
 

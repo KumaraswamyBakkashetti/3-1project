@@ -264,7 +264,7 @@ function UserDashboardSimple({ user, onLogout }) {
                 {/* Message Text */}
                 <div className="message-text">{msg.text}</div>
 
-                {/* Code Comparison (Initial vs Final) */}
+                {/* Code Display - Initial on Top, Final Below */}
                 {(msg.initial_code || msg.final_code) && (
                   <div className="code-comparison-block">
                     <div className="comparison-header">
@@ -287,16 +287,38 @@ function UserDashboardSimple({ user, onLogout }) {
                       )}
                     </div>
 
-                    <div className="code-comparison-panels">
-                      <div className="code-panel">
-                        <div className="panel-label">📝 Initial Code</div>
+                    {/* Vertical Stack Layout - Initial on Top, Final Below */}
+                    <div className="code-vertical-stack">
+                      {/* Initial Code Block */}
+                      <div className="code-block">
+                        <div className="code-block-label">
+                          <span className="label-icon">📝</span>
+                          <span className="label-text">Initial Generated Code</span>
+                          {msg.metrics && (
+                            <span className="inline-score initial">
+                              Score: {msg.metrics.initial_score?.toFixed(3) || 'N/A'}
+                            </span>
+                          )}
+                        </div>
                         <pre className="code-content">{msg.initial_code || 'N/A'}</pre>
                       </div>
                       
-                      <div className="comparison-divider">→</div>
+                      {/* Arrow Indicator */}
+                      {msg.final_code && msg.initial_code !== msg.final_code && (
+                        <div className="stack-arrow">⬇ Enhanced ⬇</div>
+                      )}
                       
-                      <div className="code-panel">
-                        <div className="panel-label">✨ Final Code</div>
+                      {/* Final Code Block */}
+                      <div className="code-block enhanced">
+                        <div className="code-block-label">
+                          <span className="label-icon">✨</span>
+                          <span className="label-text">Final Enhanced Code</span>
+                          {msg.metrics && (
+                            <span className="inline-score final">
+                              Score: {msg.metrics.final_score?.toFixed(3) || 'N/A'}
+                            </span>
+                          )}
+                        </div>
                         <pre className="code-content highlighted">{msg.final_code || msg.initial_code || 'N/A'}</pre>
                       </div>
                     </div>
