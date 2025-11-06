@@ -16,15 +16,18 @@ from typing import Optional
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Load .env file from AgentMonitor directory
-env_path = Path(__file__).parent / '.env'
-if env_path.exists():
-    load_dotenv(env_path)
+# Load environment variables from backend/.env
+# Find backend/.env regardless of where script is run from
+current_file = Path(__file__).resolve()
+project_root = current_file.parent.parent  # Go up to Final folder
+backend_env = project_root / "backend" / ".env"
+
+if backend_env.exists():
+    load_dotenv(backend_env, override=True)  # Force override existing env vars
+    print(f"[INFO] Loaded .env from: {backend_env}")
 else:
-    # Try parent directory (Final folder)
-    env_path = Path(__file__).parent.parent / '.env'
-    if env_path.exists():
-        load_dotenv(env_path)
+    load_dotenv(override=True)  # Fallback to default behavior
+    print(f"[WARNING] backend/.env not found at {backend_env}, using default .env loading")
 
 
 class GroqAPI:

@@ -189,6 +189,21 @@
   background: #667eea10;
 }
 
+.prompts-table tbody tr.highlighted {
+  background: #ffd70030;
+  border-left: 4px solid #ffd700;
+  animation: highlight-pulse 2s ease-in-out;
+}
+
+@keyframes highlight-pulse {
+  0%, 100% {
+    background: #ffd70030;
+  }
+  50% {
+    background: #ffd70050;
+  }
+}
+
 .prompts-table td {
   padding: 1rem;
   color: #2d3748;

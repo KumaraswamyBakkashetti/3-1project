@@ -89,28 +89,50 @@ CRITICAL REQUIREMENTS:
 ✅ Include all necessary imports
 ✅ Write the main logic
 ✅ Add error handling
-✅ Include test cases"""
+✅ Include test cases
+
+FORBIDDEN:
+- Removing existing functionality
+- Replacing real code with mock/demo code
+- Simplifying production features"""
         
         if not self.use_full_mas:
             # FAST MODE: Coder only for speed
             print(f"⚡ FAST MODE: Using Coder only ({self.language})")
-            simple_prompt = f"{task}{lang_hint}"
+            simple_prompt = f"{task}{lang_hint}\n\nIMPORTANT: Generate COMPLETE, PRODUCTION-READY code. Do NOT use mock data or placeholders."
             code = await self._run_agent("Coder", simple_prompt, monitor)
             return code
         else:
             # FULL MAS MODE: All 4 agents with graph edges
             print(f"🔬 FULL MAS MODE: Using all 4 agents ({self.language})")
             
-            # 1. Analyzer analyzes the task (SIMPLIFIED to avoid safety blocks)
-            analysis_prompt = f"Requirements: {task[:200]}{lang_hint}"
+            # 1. Analyzer analyzes the task requirements
+            analysis_prompt = f"""Analyze requirements for: {task[:200]}{lang_hint}
+
+FOCUS ON:
+- Core functionality needed
+- Edge cases and error conditions
+- Performance considerations
+- Security requirements
+
+Output: Brief technical analysis (3-5 points)"""
             analysis = await self._run_agent("Analyzer", analysis_prompt, monitor)
             
             # Record edge: Analyzer -> Coder
             if monitor:
                 monitor.record_graph_edge("Analyzer", "Coder")
             
-            # 2. Coder generates code (SIMPLIFIED - don't include full analysis)
-            code_prompt = f"{task}{lang_hint}"
+            # 2. Coder generates COMPLETE production code
+            code_prompt = f"""{task}{lang_hint}
+
+REQUIREMENTS:
+- COMPLETE implementation (no TODOs or placeholders)
+- Production-ready code with error handling
+- Proper imports and dependencies
+- If database/API is mentioned, implement it FULLY
+- Do NOT use mock data unless explicitly requested
+
+Output: Complete, runnable code only."""
             code = await self._run_agent("Coder", code_prompt, monitor)
             
             # Record edge: Coder -> Tester
@@ -125,8 +147,30 @@ CRITICAL REQUIREMENTS:
             if monitor:
                 monitor.record_graph_edge("Tester", "Reviewer")
             
-            # 4. Reviewer provides final version (SIMPLIFIED)
-            review_prompt = f"Improve: {task}{lang_hint}"
+            # 4. Reviewer provides final version with STRICT enhancement rules
+            review_prompt = f"""ENHANCE the following code by ADDING improvements WITHOUT removing functionality:
+
+Task: {task}{lang_hint}
+
+STRICT RULES:
+1. PRESERVE all existing functionality (do NOT simplify or remove features)
+2. ADD error handling, validation, edge cases
+3. ADD comprehensive documentation (docstrings, comments)
+4. ADD proper type hints/annotations
+5. IMPROVE code structure and readability
+6. ADD tests if not present
+7. DO NOT replace real implementations with mock/demo code
+8. DO NOT remove database operations, API calls, or core logic
+
+FORBIDDEN:
+- Removing MongoDB/database operations
+- Replacing real CRUD with mock data
+- Simplifying complex logic to "educational" examples
+- Removing imports or dependencies
+- Converting production code to demo code
+
+Output ONLY the enhanced code, nothing else."""
+            
             final_code = await self._run_agent("Reviewer", review_prompt, monitor)
             
             # Debug: Check what we got back

@@ -1,0 +1,56 @@
+{
+  "prime_checker": {
+    "task": "Write a function to check if a number is prime",
+    "initial_code": "def is_prime(n):\n    \"\"\"\n    Check if a number is prime\n    \n    Args:\n        n (int): Number to check\n    \n    Returns:\n        bool: True if prime, False otherwise\n    \"\"\"\n    if n < 2:\n        return False\n    if n == 2:\n        return True\n    if n % 2 == 0:\n        return False\n    \n    # Check odd divisors up to sqrt(n)\n    for i in range(3, int(n**0.5) + 1, 2):\n        if n % i == 0:\n            return False\n    \n    return True\n\nif __name__ == \"__main__\":\n    # Test cases\n    test_numbers = [2, 3, 4, 5, 17, 20, 29, 100]\n    for num in test_numbers:\n        print(f\"{num}: {is_prime(num)}\")",
+    "initial_score": 0.45,
+    "enhanced_code": "def is_prime(n: int) -> bool:\n    \"\"\"\n    Determine if a number is prime using optimized trial division.\n    \n    A prime number is a natural number greater than 1 that has no positive \n    divisors other than 1 and itself.\n    \n    Algorithm:\n    1. Handle edge cases (n < 2, n == 2, even numbers)\n    2. Check odd divisors from 3 to sqrt(n)\n    \n    Time Complexity: O(sqrt(n))\n    Space Complexity: O(1)\n    \n    Args:\n        n: Integer to check for primality\n    \n    Returns:\n        True if n is prime, False otherwise\n    \n    Examples:\n        >>> is_prime(2)\n        True\n        >>> is_prime(17)\n        True\n        >>> is_prime(20)\n        False\n    \n    Raises:\n        TypeError: If n is not an integer\n    \"\"\"\n    if not isinstance(n, int):\n        raise TypeError(f\"Expected int, got {type(n).__name__}\")\n    \n    # Numbers less than 2 are not prime\n    if n < 2:\n        return False\n    \n    # 2 is the only even prime\n    if n == 2:\n        return True\n    \n    # All other even numbers are not prime\n    if n % 2 == 0:\n        return False\n    \n    # Check odd divisors up to sqrt(n)\n    # If n has a divisor > sqrt(n), it must also have one < sqrt(n)\n    import math\n    for i in range(3, int(math.sqrt(n)) + 1, 2):\n        if n % i == 0:\n            return False\n    \n    return True\n\ndef test_is_prime():\n    \"\"\"Comprehensive test suite for is_prime function.\"\"\"\n    # Test edge cases\n    assert is_prime(2) == True, \"2 is prime\"\n    assert is_prime(1) == False, \"1 is not prime\"\n    assert is_prime(0) == False, \"0 is not prime\"\n    assert is_prime(-5) == False, \"Negative numbers are not prime\"\n    \n    # Test small primes\n    small_primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]\n    for p in small_primes:\n        assert is_prime(p) == True, f\"{p} should be prime\"\n    \n    # Test composite numbers\n    composites = [4, 6, 8, 9, 10, 15, 20, 25, 100]\n    for c in composites:\n        assert is_prime(c) == False, f\"{c} should not be prime\"\n    \n    # Test larger primes\n    assert is_prime(97) == True\n    assert is_prime(101) == True\n    \n    print(\"✅ All tests passed!\")\n\nif __name__ == \"__main__\":\n    # Run tests\n    test_is_prime()\n    \n    # Interactive demo\n    print(\"\\nPrime Number Checker\")\n    print(\"=\" * 40)\n    test_numbers = [2, 3, 4, 5, 17, 20, 29, 100, 97]\n    for num in test_numbers:\n        result = \"prime\" if is_prime(num) else \"not prime\"\n        print(f\"{num:3d}: {result}\")",
+    "enhanced_score": 0.62,
+    "features": {
+      "code_length": 1456,
+      "num_functions": 2,
+      "avg_function_length": 728,
+      "cyclomatic_complexity": 8,
+      "comment_ratio": 0.35,
+      "has_docstring": true,
+      "has_type_hints": true,
+      "has_error_handling": true,
+      "num_imports": 1
+    }
+  },
+  "binary_search": {
+    "task": "Implement binary search algorithm with test cases",
+    "initial_code": "def binary_search(arr, target):\n    \"\"\"\n    Binary search algorithm\n    \"\"\"\n    left, right = 0, len(arr) - 1\n    \n    while left <= right:\n        mid = (left + right) // 2\n        if arr[mid] == target:\n            return mid\n        elif arr[mid] < target:\n            left = mid + 1\n        else:\n            right = mid - 1\n    \n    return -1\n\nif __name__ == \"__main__\":\n    arr = [1, 3, 5, 7, 9, 11, 13]\n    print(binary_search(arr, 7))\n    print(binary_search(arr, 4))",
+    "initial_score": 0.48,
+    "enhanced_code": "from typing import List, TypeVar, Optional\n\nT = TypeVar('T')\n\ndef binary_search(arr: List[T], target: T) -> int:\n    \"\"\"\n    Perform binary search on a sorted array.\n    \n    Binary search is an efficient algorithm for finding an item from a sorted list.\n    It works by repeatedly dividing the search interval in half.\n    \n    Algorithm:\n    1. Compare target with middle element\n    2. If equal, return index\n    3. If target is smaller, search left half\n    4. If target is larger, search right half\n    5. Repeat until found or interval is empty\n    \n    Time Complexity: O(log n)\n    Space Complexity: O(1)\n    \n    Args:\n        arr: Sorted list of comparable elements\n        target: Element to search for\n    \n    Returns:\n        Index of target if found, -1 otherwise\n    \n    Examples:\n        >>> binary_search([1, 3, 5, 7, 9], 5)\n        2\n        >>> binary_search([1, 3, 5, 7, 9], 4)\n        -1\n    \n    Raises:\n        ValueError: If array is not sorted\n        TypeError: If array elements are not comparable\n    \"\"\"\n    if not arr:\n        return -1\n    \n    # Validate array is sorted\n    if len(arr) > 1:\n        for i in range(len(arr) - 1):\n            if arr[i] > arr[i + 1]:\n                raise ValueError(\"Array must be sorted in ascending order\")\n    \n    left, right = 0, len(arr) - 1\n    \n    while left <= right:\n        # Use (left + right) // 2 to avoid potential overflow in other languages\n        mid = left + (right - left) // 2\n        \n        try:\n            if arr[mid] == target:\n                return mid\n            elif arr[mid] < target:\n                left = mid + 1\n            else:\n                right = mid - 1\n        except TypeError as e:\n            raise TypeError(f\"Array elements must be comparable: {e}\")\n    \n    # Target not found\n    return -1\n\ndef test_binary_search():\n    \"\"\"Comprehensive test suite for binary_search.\"\"\"\n    # Test basic functionality\n    arr = [1, 3, 5, 7, 9, 11, 13]\n    assert binary_search(arr, 1) == 0, \"First element\"\n    assert binary_search(arr, 13) == 6, \"Last element\"\n    assert binary_search(arr, 7) == 3, \"Middle element\"\n    assert binary_search(arr, 4) == -1, \"Not found\"\n    \n    # Test edge cases\n    assert binary_search([], 5) == -1, \"Empty array\"\n    assert binary_search([5], 5) == 0, \"Single element found\"\n    assert binary_search([5], 3) == -1, \"Single element not found\"\n    \n    # Test larger arrays\n    large_arr = list(range(0, 1000, 2))  # [0, 2, 4, 6, ..., 998]\n    assert binary_search(large_arr, 500) == 250, \"Large array\"\n    assert binary_search(large_arr, 501) == -1, \"Large array not found\"\n    \n    # Test strings\n    str_arr = ['apple', 'banana', 'cherry', 'date', 'elderberry']\n    assert binary_search(str_arr, 'cherry') == 2, \"String search\"\n    assert binary_search(str_arr, 'grape') == -1, \"String not found\"\n    \n    # Test unsorted array (should raise ValueError)\n    try:\n        binary_search([5, 2, 8, 1], 5)\n        assert False, \"Should raise ValueError for unsorted array\"\n    except ValueError:\n        pass  # Expected\n    \n    print(\"✅ All tests passed!\")\n\nif __name__ == \"__main__\":\n    # Run tests\n    test_binary_search()\n    \n    # Interactive demo\n    print(\"\\nBinary Search Demo\")\n    print(\"=\" * 50)\n    \n    arr = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19]\n    targets = [7, 4, 1, 19, 20]\n    \n    print(f\"Array: {arr}\")\n    print()\n    \n    for target in targets:\n        index = binary_search(arr, target)\n        if index != -1:\n            print(f\"Target {target:2d}: Found at index {index}\")\n        else:\n            print(f\"Target {target:2d}: Not found\")",
+    "enhanced_score": 0.68,
+    "features": {
+      "code_length": 2890,
+      "num_functions": 2,
+      "avg_function_length": 1445,
+      "cyclomatic_complexity": 12,
+      "comment_ratio": 0.38,
+      "has_docstring": true,
+      "has_type_hints": true,
+      "has_error_handling": true,
+      "num_imports": 2
+    }
+  },
+  "fibonacci": {
+    "task": "Write a function to calculate Fibonacci numbers",
+    "initial_code": "def fibonacci(n):\n    if n <= 1:\n        return n\n    return fibonacci(n-1) + fibonacci(n-2)\n\nif __name__ == \"__main__\":\n    for i in range(10):\n        print(f\"F({i}) = {fibonacci(i)}\")",
+    "initial_score": 0.35,
+    "enhanced_code": "from functools import lru_cache\nfrom typing import Iterator\n\n@lru_cache(maxsize=None)\ndef fibonacci(n: int) -> int:\n    \"\"\"\n    Calculate the nth Fibonacci number using memoization.\n    \n    The Fibonacci sequence: 0, 1, 1, 2, 3, 5, 8, 13, ...\n    F(0) = 0, F(1) = 1, F(n) = F(n-1) + F(n-2) for n > 1\n    \n    Time Complexity: O(n) with memoization\n    Space Complexity: O(n) for cache\n    \n    Args:\n        n: Position in Fibonacci sequence (0-indexed)\n    \n    Returns:\n        The nth Fibonacci number\n    \n    Raises:\n        ValueError: If n is negative\n    \n    Examples:\n        >>> fibonacci(0)\n        0\n        >>> fibonacci(1)\n        1\n        >>> fibonacci(10)\n        55\n    \"\"\"\n    if not isinstance(n, int):\n        raise TypeError(f\"Expected int, got {type(n).__name__}\")\n    \n    if n < 0:\n        raise ValueError(\"Fibonacci not defined for negative numbers\")\n    \n    if n <= 1:\n        return n\n    \n    return fibonacci(n - 1) + fibonacci(n - 2)\n\ndef fibonacci_iterative(n: int) -> int:\n    \"\"\"\n    Calculate nth Fibonacci number iteratively (more efficient for large n).\n    \n    Time Complexity: O(n)\n    Space Complexity: O(1)\n    \"\"\"\n    if n < 0:\n        raise ValueError(\"Fibonacci not defined for negative numbers\")\n    if n <= 1:\n        return n\n    \n    a, b = 0, 1\n    for _ in range(2, n + 1):\n        a, b = b, a + b\n    \n    return b\n\ndef fibonacci_sequence(count: int) -> Iterator[int]:\n    \"\"\"\n    Generate Fibonacci sequence up to count numbers.\n    \n    Args:\n        count: Number of Fibonacci numbers to generate\n    \n    Yields:\n        Next Fibonacci number in sequence\n    \"\"\"\n    a, b = 0, 1\n    for _ in range(count):\n        yield a\n        a, b = b, a + b\n\nif __name__ == \"__main__\":\n    print(\"Fibonacci Numbers (Recursive with Memoization)\")\n    print(\"=\" * 50)\n    for i in range(15):\n        print(f\"F({i:2d}) = {fibonacci(i):5d}\")\n    \n    print(\"\\nFibonacci Sequence (Generator)\")\n    print(\"=\" * 50)\n    print(list(fibonacci_sequence(15)))",
+    "enhanced_score": 0.58,
+    "features": {
+      "code_length": 1820,
+      "num_functions": 3,
+      "avg_function_length": 606,
+      "cyclomatic_complexity": 9,
+      "comment_ratio": 0.32,
+      "has_docstring": true,
+      "has_type_hints": true,
+      "has_error_handling": true,
+      "num_imports": 2
+    }
+  }
+}

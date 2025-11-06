@@ -171,31 +171,7 @@ const AnalyticsDashboard = ({ allRuns }) => {
         <p className="subtitle">Comprehensive insights across {allRuns.length} runs</p>
       </div>
 
-      {/* Chart 1: Feature Importance */}
-      <div className="chart-card">
-        <h3>🎯 Feature Importance (XGBoost Model)</h3>
-        <p className="chart-description">Which features matter most for predicting MAS quality</p>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={featureImportance} layout="vertical" margin={{ left: 150 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis type="number" domain={[0, 0.3]} />
-            <YAxis dataKey="feature" type="category" width={140} />
-            <Tooltip />
-            <Bar dataKey="value" name="Importance">
-              {featureImportance.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={getCategoryColor(entry.category)} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-        <div className="chart-legend">
-          <span><span className="legend-dot" style={{ background: '#2196f3' }}></span> System Features</span>
-          <span><span className="legend-dot" style={{ background: '#4caf50' }}></span> Graph Features</span>
-          <span><span className="legend-dot" style={{ background: '#ff9800' }}></span> Collective Score</span>
-        </div>
-      </div>
-
-      {/* Chart 2: Score Evolution Timeline */}
+      {/* Chart 1: Score Evolution Timeline - MOST IMPORTANT */}
       <div className="chart-card">
         <h3>📈 Score Evolution (Recent 10 Runs)</h3>
         <p className="chart-description">How code quality improves from initial to final output</p>
@@ -213,7 +189,7 @@ const AnalyticsDashboard = ({ allRuns }) => {
       </div>
 
       <div className="charts-row">
-        {/* Chart 3: Score Distribution */}
+        {/* Chart 2: Score Distribution */}
         <div className="chart-card half">
           <h3>📉 Score Distribution</h3>
           <p className="chart-description">Distribution of final scores across all runs</p>
@@ -232,63 +208,28 @@ const AnalyticsDashboard = ({ allRuns }) => {
           </ResponsiveContainer>
         </div>
 
-        {/* Chart 4: Feature Radar */}
+        {/* Chart 3: Agent Performance Summary */}
         <div className="chart-card half">
-          <h3>🎨 Feature Radar (Avg)</h3>
-          <p className="chart-description">Holistic view of MAS characteristics</p>
-          <ResponsiveContainer width="100%" height={250}>
-            <RadarChart data={featureRadar}>
-              <PolarGrid />
-              <PolarAngleAxis dataKey="feature" />
-              <PolarRadiusAxis domain={[0, 100]} />
-              <Radar name="Average Features" dataKey="value" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
-              <Tooltip />
-            </RadarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Chart 5: Agent Performance Heatmap */}
-      <div className="chart-card">
-        <h3>🔥 Agent Performance Comparison</h3>
-        <p className="chart-description">Compare performance across different agents</p>
-        <div className="heatmap-container">
-          <table className="heatmap-table">
-            <thead>
-              <tr>
-                <th>Agent</th>
-                <th>Avg Score</th>
-                <th>Avg Latency (s)</th>
-                <th>Total Tokens</th>
-                <th>Enhancement Rate (%)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {agentPerformance.map((agent, index) => (
-                <tr key={index}>
-                  <td className="agent-name-cell">
-                    {agent.agent === 'Analyzer' && '🔍'} 
-                    {agent.agent === 'Coder' && '💻'} 
-                    {agent.agent === 'Tester' && '🧪'} 
-                    {agent.agent === 'Reviewer' && '👁️'}
-                    {agent.agent}
-                  </td>
-                  <td className={`heatmap-cell ${getHeatmapClass(agent.avgScore, 'score')}`}>
-                    {agent.avgScore.toFixed(3)}
-                  </td>
-                  <td className={`heatmap-cell ${getHeatmapClass(agent.avgLatency, 'latency')}`}>
-                    {agent.avgLatency.toFixed(2)}
-                  </td>
-                  <td className={`heatmap-cell ${getHeatmapClass(agent.totalTokens, 'tokens')}`}>
-                    {agent.totalTokens}
-                  </td>
-                  <td className={`heatmap-cell ${getHeatmapClass(agent.enhancementRate, 'rate')}`}>
-                    {agent.enhancementRate.toFixed(1)}%
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <h3>🤖 Agent Activity</h3>
+          <p className="chart-description">Multi-Agent System performance overview</p>
+          <div className="agent-summary-cards">
+            {agentPerformance.map((agent, index) => (
+              <div key={index} className="agent-summary-card">
+                <div className="agent-icon">
+                  {agent.agent === 'Analyzer' && '🔍'} 
+                  {agent.agent === 'Coder' && '💻'} 
+                  {agent.agent === 'Tester' && '🧪'} 
+                  {agent.agent === 'Reviewer' && '👁️'}
+                </div>
+                <div className="agent-summary-content">
+                  <div className="agent-summary-name">{agent.agent}</div>
+                  <div className="agent-summary-score">
+                    Score: {agent.avgScore.toFixed(2)}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 

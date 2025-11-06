@@ -291,15 +291,47 @@ class MASPredictor:
             print(f"[SAVED] Metadata saved to {meta_path}")
     
     def load(self, path: Optional[Path] = None) -> None:
-        """Load model from disk."""
+        """
+        Load model from disk.
+        Supports both pickle (.pkl) and XGBoost native (.json) formats.
+        JSON format is preferred to avoid serialization warnings.
+        """
         load_path = path or self.model_path
         if load_path is None:
             raise ValueError("No load path specified.")
         
         load_path = Path(load_path)
-        if not load_path.exists():
-            raise FileNotFoundError(f"Model file not found: {load_path}")
         
+        # Try JSON format first (preferred)
+        json_path = load_path.with_suffix('.json')
+        meta_path = load_path.with_suffix('.meta.json')
+        
+        if json_path.exists():
+            # Load XGBoost model from native JSON format
+            if xgb is None:
+                raise ImportError("xgboost is required but not installed")
+            
+            self.model = xgb.XGBRegressor()
+            self.model.load_model(str(json_path))
+            print(f"[LOADED] XGBoost model loaded from {json_path}")
+            
+            # Load metadata if available
+            if meta_path.exists():
+                import json as json_lib
+                with open(meta_path, 'r') as f:
+                    meta = json_lib.load(f)
+                    self.training_metrics_ = meta.get('training_metrics')
+                    if meta.get('feature_importance'):
+                        self.feature_importance_ = pd.DataFrame(meta['feature_importance'])
+                print(f"[LOADED] Metadata loaded from {meta_path}")
+            
+            return
+        
+        # Fallback to pickle format (legacy)
+        if not load_path.exists():
+            raise FileNotFoundError(f"Model file not found: {load_path} or {json_path}")
+        
+        print(f"⚠️  Loading legacy pickle format. Consider re-saving with format='json' to avoid warnings.")
         with open(load_path, 'rb') as f:
             data = pickle.load(f)
         

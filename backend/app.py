@@ -251,33 +251,47 @@ async def health():
 
 @app.post("/api/login")
 async def login(request: LoginRequest):
-    print(f"Login attempt - Username: {request.username}, Password length: {len(request.password)}")
-    user = db.verify_user(request.username, request.password)
-    print(f"User found: {user is not None}")
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-    token = create_token(user["username"], user["role"])
-    return {"token": token, "username": user["username"], "role": user["role"]}
+    """Authenticate user and return JWT token"""
+    try:
+        print(f"Login attempt - Username: {request.username}, Password length: {len(request.password)}")
+        user = db.verify_user(request.username, request.password)
+        print(f"User found: {user is not None}")
+        if not user:
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+        token = create_token(user["username"], user["role"])
+        return {"token": token, "username": user["username"], "role": user["role"]}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Login error: {e}")
+        raise HTTPException(status_code=500, detail=f"Login failed: {str(e)}")
 
 @app.post("/api/register")
 async def register(request: RegisterRequest):
-    # Check if user already exists
-    existing = db.users.find_one({"username": request.username})
-    if existing:
-        raise HTTPException(status_code=400, detail="Username already exists")
-    
-    # Create new user
-    new_user = {
-        "username": request.username,
-        "password": db.hash_password(request.password),
-        "role": request.role if request.role in ["user", "admin"] else "user",
-        "created_at": datetime.now()
-    }
-    db.users.insert_one(new_user)
-    
-    # Create token for immediate login
-    token = create_token(new_user["username"], new_user["role"])
-    return {"token": token, "username": new_user["username"], "role": new_user["role"]}
+    """Register new user and return JWT token"""
+    try:
+        # Check if user already exists
+        existing = db.users.find_one({"username": request.username})
+        if existing:
+            raise HTTPException(status_code=400, detail="Username already exists")
+        
+        # Create new user
+        new_user = {
+            "username": request.username,
+            "password": db.hash_password(request.password),
+            "role": request.role if request.role in ["user", "admin"] else "user",
+            "created_at": datetime.now()
+        }
+        db.users.insert_one(new_user)
+        
+        # Create token for immediate login
+        token = create_token(new_user["username"], new_user["role"])
+        return {"token": token, "username": new_user["username"], "role": new_user["role"]}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Registration error: {e}")
+        raise HTTPException(status_code=500, detail=f"Registration failed: {str(e)}")
 
 @app.get("/api/user/me")
 async def get_current_user(user = Depends(verify_token)):
@@ -285,13 +299,33 @@ async def get_current_user(user = Depends(verify_token)):
 
 @app.post("/api/run_mas")
 async def run_mas(request: RunRequest, user = Depends(verify_token)):
+    """
+    Main endpoint for code generation with Multi-Agent System.
+    
+    Handles both initial generation and enhancement requests.
+    Uses Gemini for code generation and Groq (free) for scoring.
+    """
     try:
         print(f"MAS execution request from {user['username']}: {request.task[:50]}...")
         
+        # Validate API keys early
+        if not GEMINI_API_KEY:
+            raise HTTPException(
+                status_code=503, 
+                detail="Gemini API key not configured. Please set GEMINI_API_KEY in backend/.env"
+            )
+        
         # Import necessary components from AgentMonitor
-        from AgentMonitor import EnhancedAgentMonitor, CodeGenerationMAS, MASPredictor
-        from AgentMonitor.gemini_api import gemini_call
-        from AgentMonitor.groq_api import groq_call
+        try:
+            from AgentMonitor import EnhancedAgentMonitor, CodeGenerationMAS, MASPredictor
+            from AgentMonitor.gemini_api import gemini_call
+            from AgentMonitor.groq_api import groq_call
+        except ImportError as e:
+            print(f"❌ Import error: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"AgentMonitor module import failed: {str(e)}"
+            )
         
         # DUAL-LLM SETUP: Gemini for code generation, Groq (FREE) for judging
         llm = gemini_call  # Code generation (powerful model)

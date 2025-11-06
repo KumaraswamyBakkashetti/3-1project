@@ -6,9 +6,20 @@ import os
 import google.generativeai as genai
 from dotenv import load_dotenv
 import time
+from pathlib import Path
 
-# Load environment variables
-load_dotenv()
+# Load environment variables from backend/.env
+# Find backend/.env regardless of where script is run from
+current_file = Path(__file__).resolve()
+project_root = current_file.parent.parent  # Go up to Final folder
+backend_env = project_root / "backend" / ".env"
+
+if backend_env.exists():
+    load_dotenv(backend_env, override=True)  # Force override existing env vars
+    print(f"[INFO] Loaded .env from: {backend_env}")
+else:
+    load_dotenv(override=True)  # Fallback to default behavior
+    print(f"[WARNING] backend/.env not found at {backend_env}, using default .env loading")
 
 class GeminiKeyManager:
     """Manages multiple Gemini API keys with automatic rotation"""

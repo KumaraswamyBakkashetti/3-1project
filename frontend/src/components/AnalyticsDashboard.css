@@ -127,6 +127,58 @@
   color: #c62828;
 }
 
+/* Agent Summary Cards */
+.agent-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  padding: 10px 0;
+}
+
+.agent-summary-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px;
+  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+  border-radius: 8px;
+  border: 1px solid #667eea20;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.agent-summary-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.2);
+}
+
+.agent-icon {
+  font-size: 28px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 8px;
+}
+
+.agent-summary-content {
+  flex: 1;
+}
+
+.agent-summary-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.agent-summary-score {
+  font-size: 13px;
+  color: #667eea;
+  font-weight: 500;
+}
+
 /* Summary Stats */
 .summary-stats {
   display: grid;

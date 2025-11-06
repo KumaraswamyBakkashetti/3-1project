@@ -13,6 +13,10 @@ const AdminAnalytics = () => {
     maxScore: 1,
     autoEnhancedOnly: false
   });
+  const [sortConfig, setSortConfig] = useState({
+    key: 'timestamp',
+    direction: 'desc'
+  });
 
   const navigate = useNavigate();
 
@@ -58,7 +62,8 @@ const AdminAnalytics = () => {
       }
 
       filtered = filtered.filter(run => {
-        const runDate = new Date(run.timestamp);
+        // Support both timestamp and created_at fields
+        const runDate = new Date(run.timestamp || run.created_at);
         return runDate >= cutoff;
       });
     }
@@ -77,7 +82,57 @@ const AdminAnalytics = () => {
     return filtered;
   };
 
-  const filteredRuns = applyFilters();
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const getSortedRuns = (runs) => {
+    const sorted = [...runs].sort((a, b) => {
+      let aValue, bValue;
+
+      switch (sortConfig.key) {
+        case 'user':
+          aValue = a.user_id || '';
+          bValue = b.user_id || '';
+          break;
+        case 'initial_score':
+          aValue = a.initial_score || 0;
+          bValue = b.initial_score || 0;
+          break;
+        case 'final_score':
+          aValue = a.predicted_score || 0;
+          bValue = b.predicted_score || 0;
+          break;
+        case 'timestamp':
+          // Support both timestamp and created_at fields
+          aValue = new Date(a.timestamp || a.created_at);
+          bValue = new Date(b.timestamp || b.created_at);
+          break;
+        case 'agents':
+          aValue = a.monitor_data?.agent_stats ? Object.keys(a.monitor_data.agent_stats).length : 0;
+          bValue = b.monitor_data?.agent_stats ? Object.keys(b.monitor_data.agent_stats).length : 0;
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) {
+        return sortConfig.direction === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+
+    return sorted;
+  };
+
+  const filteredRuns = getSortedRuns(applyFilters());
 
   if (loading) {
     return (
@@ -107,7 +162,7 @@ const AdminAnalytics = () => {
       {/* Header */}
       <div className="analytics-page-header">
         <div className="header-left">
-          <button className="back-button" onClick={() => navigate('/admin')}>
+          <button className="back-button" onClick={() => navigate('/admin-dashboard')}>
             ← Back to Admin
           </button>
           <h1>🎯 AgentMonitor Analytics</h1>
@@ -183,13 +238,38 @@ const AdminAnalytics = () => {
             <thead>
               <tr>
                 <th>ID</th>
-                <th>User</th>
+                <th 
+                  className="sortable" 
+                  onClick={() => handleSort('user')}
+                >
+                  User {sortConfig.key === 'user' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
                 <th>Prompt</th>
-                <th>Initial Score</th>
-                <th>Final Score</th>
+                <th 
+                  className="sortable" 
+                  onClick={() => handleSort('initial_score')}
+                >
+                  Initial Score {sortConfig.key === 'initial_score' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
+                <th 
+                  className="sortable" 
+                  onClick={() => handleSort('final_score')}
+                >
+                  Final Score {sortConfig.key === 'final_score' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
                 <th>Auto-Enhanced</th>
-                <th>Agents</th>
-                <th>Timestamp</th>
+                <th 
+                  className="sortable" 
+                  onClick={() => handleSort('agents')}
+                >
+                  Agents {sortConfig.key === 'agents' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
+                <th 
+                  className="sortable" 
+                  onClick={() => handleSort('timestamp')}
+                >
+                  Timestamp {sortConfig.key === 'timestamp' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -198,8 +278,9 @@ const AdminAnalytics = () => {
                 <tr key={run._id || index}>
                   <td className="mono">{(run._id || '').substring(0, 8)}...</td>
                   <td>{run.user_id || 'Unknown'}</td>
-                  <td className="prompt-cell" title={run.prompt}>
-                    {run.prompt?.substring(0, 50) || 'N/A'}...
+                  <td className="prompt-cell" title={run.task || run.prompt}>
+                    {/* Support both 'task' and 'prompt' field names */}
+                    {(run.task || run.prompt || 'N/A').substring(0, 50)}...
                   </td>
                   <td className={`score-cell ${getScoreClass(run.initial_score)}`}>
                     {(run.initial_score || 0).toFixed(3)}
@@ -218,12 +299,18 @@ const AdminAnalytics = () => {
                     {run.monitor_data?.agent_stats ? Object.keys(run.monitor_data.agent_stats).length : 0}
                   </td>
                   <td className="mono">
-                    {new Date(run.timestamp).toLocaleString()}
+                    {/* Support both timestamp and created_at fields */}
+                    {new Date(run.timestamp || run.created_at).toLocaleString()}
                   </td>
                   <td>
                     <button 
                       className="view-button"
-                      onClick={() => navigate(`/admin/prompt/${run._id}`)}
+                      onClick={() => {
+                        // Navigate to user detail with prompt ID in state
+                        navigate(`/admin/user/${run.user_id}`, { 
+                          state: { highlightPromptId: run._id } 
+                        });
+                      }}
                     >
                       View Details
                     </button>

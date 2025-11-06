@@ -1,19 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getAllRuns } from '../api';
 import './AdminUserDetail.css';
 
 function AdminUserDetail() {
   const { userId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [userRuns, setUserRuns] = useState([]);
   const [userInfo, setUserInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('date'); // date, score, loops
+  const highlightedRowRef = useRef(null);
 
   useEffect(() => {
     loadUserRuns();
   }, [userId]);
+
+  useEffect(() => {
+    // Scroll to highlighted prompt if coming from analytics
+    if (highlightedRowRef.current && location.state?.highlightPromptId) {
+      highlightedRowRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [userRuns, location.state]);
 
   const loadUserRuns = async () => {
     try {
@@ -166,56 +175,60 @@ function AdminUserDetail() {
                     </tr>
                   </thead>
                   <tbody>
-                    {sortedRuns.map((run) => (
-                      <tr 
-                        key={run._id} 
-                        className="prompt-row"
-                        onClick={() => handlePromptClick(run._id)}
-                      >
-                        <td className="prompt-text">
-                          <div className="task-preview">
-                            {run.task.length > 80 
-                              ? run.task.substring(0, 80) + '...'
-                              : run.task
-                            }
-                          </div>
-                        </td>
-                        <td className="date-cell">
-                          <div className="date-display">
-                            {new Date(run.created_at).toLocaleDateString()}
-                          </div>
-                          <div className="time-display">
-                            {new Date(run.created_at).toLocaleTimeString()}
-                          </div>
-                        </td>
-                        <td>
-                          <span className={`score-badge ${getScoreColor(run.features?.personal_score || 0)}`}>
-                            {(run.features?.personal_score || 0).toFixed(3)}
-                          </span>
-                        </td>
-                        <td>
-                          <span className={`score-badge ${getScoreColor(run.predicted_score || 0)}`}>
-                            {(run.predicted_score || 0).toFixed(3)}
-                          </span>
-                        </td>
-                        <td>
-                          <span className="loops-badge">
-                            {run.features?.loops || 0}
-                          </span>
-                        </td>
-                        <td>
-                          <button 
-                            className="view-btn"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handlePromptClick(run._id);
-                            }}
-                          >
-                            View →
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                    {sortedRuns.map((run) => {
+                      const isHighlighted = location.state?.highlightPromptId === run._id;
+                      return (
+                        <tr 
+                          key={run._id} 
+                          className={`prompt-row ${isHighlighted ? 'highlighted' : ''}`}
+                          onClick={() => handlePromptClick(run._id)}
+                          ref={isHighlighted ? highlightedRowRef : null}
+                        >
+                          <td className="prompt-text">
+                            <div className="task-preview">
+                              {run.task.length > 80 
+                                ? run.task.substring(0, 80) + '...'
+                                : run.task
+                              }
+                            </div>
+                          </td>
+                          <td className="date-cell">
+                            <div className="date-display">
+                              {new Date(run.created_at).toLocaleDateString()}
+                            </div>
+                            <div className="time-display">
+                              {new Date(run.created_at).toLocaleTimeString()}
+                            </div>
+                          </td>
+                          <td>
+                            <span className={`score-badge ${getScoreColor(run.features?.personal_score || 0)}`}>
+                              {(run.features?.personal_score || 0).toFixed(3)}
+                            </span>
+                          </td>
+                          <td>
+                            <span className={`score-badge ${getScoreColor(run.predicted_score || 0)}`}>
+                              {(run.predicted_score || 0).toFixed(3)}
+                            </span>
+                          </td>
+                          <td>
+                            <span className="loops-badge">
+                              {run.features?.loops || 0}
+                            </span>
+                          </td>
+                          <td>
+                            <button 
+                              className="view-btn"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handlePromptClick(run._id);
+                              }}
+                            >
+                              View →
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

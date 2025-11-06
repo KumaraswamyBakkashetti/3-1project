@@ -1,0 +1,69 @@
+{
+  "feature_columns": [
+    "avg_personal_score",
+    "min_personal_score",
+    "max_loops",
+    "total_latency",
+    "total_token_usage",
+    "num_agents_triggered_enhancement",
+    "num_nodes",
+    "num_edges",
+    "clustering_coefficient",
+    "transitivity",
+    "avg_degree_centrality",
+    "avg_betweenness_centrality",
+    "avg_closeness_centrality",
+    "pagerank_entropy",
+    "heterogeneity_score",
+    "collective_score"
+  ],
+  "target_column": "label_mas_score",
+  "training_metrics": {
+    "train_rmse": 0.08017189760265249,
+    "test_rmse": 0.08715455903270283,
+    "train_mae": 0.056412827905831416,
+    "test_mae": 0.06795424913904914,
+    "train_r2": 0.5215035549043117,
+    "test_r2": -0.01117766976205714,
+    "train_spearman": 0.8909040112352039,
+    "test_spearman": 0.4304783092324805
+  },
+  "feature_importance": {
+    "feature": {
+      "13": "pagerank_entropy",
+      "10": "avg_degree_centrality",
+      "6": "num_nodes",
+      "0": "avg_personal_score",
+      "7": "num_edges",
+      "4": "total_token_usage",
+      "2": "max_loops",
+      "1": "min_personal_score",
+      "3": "total_latency",
+      "5": "num_agents_triggered_enhancement",
+      "14": "heterogeneity_score",
+      "8": "clustering_coefficient",
+      "11": "avg_betweenness_centrality",
+      "9": "transitivity",
+      "12": "avg_closeness_centrality",
+      "15": "collective_score"
+    },
+    "importance": {
+      "13": 0.20516179502010345,
+      "10": 0.1776122897863388,
+      "6": 0.17048552632331848,
+      "0": 0.09474876523017883,
+      "7": 0.08511533588171005,
+      "4": 0.06059996783733368,
+      "2": 0.04660194367170334,
+      "1": 0.04638831689953804,
+      "3": 0.04423023387789726,
+      "5": 0.034877412021160126,
+      "14": 0.03417843580245972,
+      "8": 0.0,
+      "11": 0.0,
+      "9": 0.0,
+      "12": 0.0,
+      "15": 0.0
+    }
+  }
+}

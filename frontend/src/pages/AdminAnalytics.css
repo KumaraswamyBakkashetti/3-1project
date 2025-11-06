@@ -189,6 +189,16 @@
   top: 0;
 }
 
+.runs-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s;
+}
+
+.runs-table th.sortable:hover {
+  background: #e8e8e8;
+}
+
 .runs-table td {
   padding: 12px;
   border-bottom: 1px solid #eee;
