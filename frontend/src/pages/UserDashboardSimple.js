@@ -9,9 +9,12 @@ function UserDashboardSimple({ user, onLogout }) {
     { 
       type: 'assistant', 
       text: '👋 Hi! I\'m your AI coding assistant powered by Multi-Agent System. Just describe what you want to code, and I\'ll generate it for you!',
-      timestamp: new Date()
+      timestamp: new Date(),
+      id: `sys-${Date.now()}`
     }
   ]);
+  // store conversations keyed by id so they persist while toggling UI (history/sidebar)
+  const [conversations, setConversations] = useState({});
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
   const [expandedMetrics, setExpandedMetrics] = useState({});
@@ -21,6 +24,7 @@ function UserDashboardSimple({ user, onLogout }) {
   const [showHistoryDropdown, setShowHistoryDropdown] = useState(false);
   const messagesEndRef = useRef(null);
   const dropdownRef = useRef(null);
+  const menuButtonRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -33,9 +37,11 @@ function UserDashboardSimple({ user, onLogout }) {
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setShowHistoryDropdown(false);
-      }
+      // ignore clicks inside the dropdown or on the menu toggle button
+      if (dropdownRef.current && dropdownRef.current.contains(event.target)) return;
+      if (menuButtonRef.current && menuButtonRef.current.contains(event.target)) return;
+
+      setShowHistoryDropdown(false);
     };
 
     if (showHistoryDropdown) {
@@ -61,14 +67,16 @@ function UserDashboardSimple({ user, onLogout }) {
   };
 
   const startNewChat = () => {
-    setMessages([
-      { 
-        type: 'assistant', 
-        text: '👋 Hi! I\'m your AI coding assistant. What would you like to code today?',
-        timestamp: new Date()
-      }
-    ]);
-    setCurrentConversationId(null);
+    const msg = {
+      id: `new-${Date.now()}`,
+      type: 'assistant',
+      text: '👋 Hi! I\'m your AI coding assistant. What would you like to code today?',
+      timestamp: new Date()
+    };
+
+    setMessages([msg]);
+    setConversations(prev => ({ ...prev, [msg.id]: [msg] }));
+    setCurrentConversationId(msg.id);
     setExpandedMetrics({});
   };
 
@@ -90,27 +98,16 @@ function UserDashboardSimple({ user, onLogout }) {
       monitor_data: run.monitor_data || null
     };
 
-    setMessages([
-      { 
-        type: 'assistant', 
-        text: '📂 Previous conversation loaded.',
-        timestamp: new Date(run.created_at)
-      },
-      {
-        type: 'user',
-        text: run.task,
-        timestamp: new Date(run.created_at)
-      },
-      {
-        type: 'assistant',
-        text: '✅ Here\'s your code:',
-        // populate fields that the renderer expects
-        initial_code: initialCode,
-        final_code: finalCode,
-        metrics,
-        timestamp: new Date(run.created_at)
-      }
-    ]);
+    const baseTime = new Date(run.created_at || Date.now()).getTime();
+    const conv = [
+      { id: `${run._id}-m0`, type: 'assistant', text: '📂 Previous conversation loaded.', timestamp: new Date(baseTime) },
+      { id: `${run._id}-m1`, type: 'user', text: run.task || 'Previous task', timestamp: new Date(baseTime + 10) },
+      { id: `${run._id}-m2`, type: 'assistant', text: "✅ Here's your code:", initial_code: initialCode, final_code: finalCode, metrics, timestamp: new Date(baseTime + 20) }
+    ];
+
+    // persist the conversation so toggling the sidebar doesn't clear it
+    setConversations(prev => ({ ...prev, [run._id]: conv }));
+    setMessages(conv);
     setCurrentConversationId(run._id);
     setSidebarOpen(false); // Close sidebar on mobile
   };
@@ -125,9 +122,17 @@ function UserDashboardSimple({ user, onLogout }) {
     const userMsg = {
       type: 'user',
       text: userMessage,
-      timestamp: new Date()
+      timestamp: new Date(),
+      id: `u-${Date.now()}`
     };
-    setMessages(prev => [...prev, userMsg]);
+    setMessages(prev => {
+      const next = [...prev, userMsg];
+      // persist to current conversation
+      if (currentConversationId) {
+        setConversations(cprev => ({ ...cprev, [currentConversationId]: next }));
+      }
+      return next;
+    });
     setLoading(true);
 
     try {
@@ -148,10 +153,16 @@ function UserDashboardSimple({ user, onLogout }) {
           features: response.features,
           run_id: response.run_id
         },
-        timestamp: new Date()
+        timestamp: new Date(),
+        id: `a-${Date.now()}`
       };
-      
-      setMessages(prev => [...prev, assistantMsg]);
+      setMessages(prev => {
+        const next = [...prev, assistantMsg];
+        if (currentConversationId) {
+          setConversations(cprev => ({ ...cprev, [currentConversationId]: next }));
+        }
+        return next;
+      });
       
       // Reload recent runs to include this new one
       loadRecentRuns();
@@ -162,9 +173,16 @@ function UserDashboardSimple({ user, onLogout }) {
         type: 'assistant',
         text: `❌ Sorry, something went wrong: ${error.message}`,
         isError: true,
-        timestamp: new Date()
+        timestamp: new Date(),
+        id: `err-${Date.now()}`
       };
-      setMessages(prev => [...prev, errorMsg]);
+      setMessages(prev => {
+        const next = [...prev, errorMsg];
+        if (currentConversationId) {
+          setConversations(cprev => ({ ...cprev, [currentConversationId]: next }));
+        }
+        return next;
+      });
     } finally {
       setLoading(false);
     }
@@ -190,7 +208,8 @@ function UserDashboardSimple({ user, onLogout }) {
       <div className="history-menubar">
         <button 
           className="sidebar-toggle-button"
-          onClick={() => setShowHistoryDropdown(!showHistoryDropdown)}
+          onClick={(e) => { e.stopPropagation(); setShowHistoryDropdown(prev => !prev); }}
+          ref={menuButtonRef}
           title="Toggle sidebar"
         >
           <span className="menu-icon">☰</span>
@@ -274,8 +293,14 @@ function UserDashboardSimple({ user, onLogout }) {
           <div className="chat-container">
         {/* Messages */}
         <div className="messages-area">
+          {messages.length === 0 && (
+            <div className="empty-chat" style={{color: 'var(--muted)', textAlign: 'center', padding: 36}}>
+              No messages yet — start a new chat or open a previous conversation
+            </div>
+          )}
+
           {messages.map((msg, index) => (
-            <div key={index} className={`message-wrapper ${msg.type}`}>
+            <div key={msg.id || `${msg.timestamp?.getTime()}-${index}` } className={`message-wrapper ${msg.type}`}>
               <div className="message-bubble">
                 {/* Message Text */}
                 <div className="message-text">{msg.text}</div>
@@ -465,7 +490,7 @@ function UserDashboardSimple({ user, onLogout }) {
 
                 {/* Timestamp */}
                 <div className="message-time">
-                  {msg.timestamp.toLocaleTimeString()}
+                  {msg.timestamp ? (new Date(msg.timestamp)).toLocaleTimeString() : ''}
                 </div>
               </div>
             </div>
@@ -490,21 +515,23 @@ function UserDashboardSimple({ user, onLogout }) {
 
         {/* Input Area */}
         <div className="input-area">
-          <textarea
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Describe what you want to code... (e.g., 'Create a function to sort an array')"
-            disabled={loading}
-            rows="3"
-          />
-          <button 
-            onClick={handleSendMessage}
-            disabled={loading || !inputText.trim()}
-            className="send-button"
-          >
-            {loading ? '⏳' : '🚀 Generate'}
-          </button>
+          <div className="input-inner">
+            <textarea
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Describe what you want to code... (e.g., 'Create a function to sort an array')"
+              disabled={loading}
+              rows="3"
+            />
+            <button 
+              onClick={handleSendMessage}
+              disabled={loading || !inputText.trim()}
+              className="send-button"
+            >
+              {loading ? '⏳' : '🚀 Generate'}
+            </button>
+          </div>
         </div>
       </div>
       </div>
