@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { runMAS, getUserRuns } from '../api';
 import AgentCollaborationGraph from '../components/AgentCollaborationGraph';
+import CopyButton from '../components/CopyButton';
 import './UserDashboardSimple.css';
 
 function UserDashboardSimple({ user, onLogout }) {
@@ -306,7 +307,7 @@ function UserDashboardSimple({ user, onLogout }) {
                     <div className="code-vertical-stack">
                       {/* Initial Code Block */}
                       <div className="code-block">
-                        <div className="code-block-label">
+                        <div className="code-block-label" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                           <span className="label-icon">📝</span>
                           <span className="label-text">Initial Generated Code</span>
                           {msg.metrics && (
@@ -314,6 +315,8 @@ function UserDashboardSimple({ user, onLogout }) {
                               Score: {msg.metrics.initial_score?.toFixed(3) || 'N/A'}
                             </span>
                           )}
+                          {/* Copy initial code */}
+                          <CopyButton textToCopy={msg.initial_code || ''} label="Copy Code" size={12} />
                         </div>
                         <pre className="code-content">{msg.initial_code || 'N/A'}</pre>
                       </div>
@@ -325,7 +328,7 @@ function UserDashboardSimple({ user, onLogout }) {
                       
                       {/* Final Code Block */}
                       <div className="code-block enhanced">
-                        <div className="code-block-label">
+                        <div className="code-block-label" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                           <span className="label-icon">✨</span>
                           <span className="label-text">Final Enhanced Code</span>
                           {msg.metrics && (
@@ -333,6 +336,8 @@ function UserDashboardSimple({ user, onLogout }) {
                               Score: {msg.metrics.final_score?.toFixed(3) || 'N/A'}
                             </span>
                           )}
+                          {/* Copy final code */}
+                          <CopyButton textToCopy={msg.final_code || msg.initial_code || ''} label="Copy Code" size={12} />
                         </div>
                         <pre className="code-content highlighted">{msg.final_code || msg.initial_code || 'N/A'}</pre>
                       </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getRun } from '../api';
 import AgentCollaborationGraph from '../components/AgentCollaborationGraph';
+import CopyButton from '../components/CopyButton';
 import './AdminPromptDetail.css';
 
 function AdminPromptDetail() {
@@ -126,9 +127,14 @@ function AdminPromptDetail() {
       {/* Code Comparison */}
       <div className="code-comparison">
         <div className="code-panel">
-          <div className="code-panel-header">
-            <h3>📄 Initial Code</h3>
-            <span className="code-status">First Generation</span>
+          <div className="code-panel-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <h3>📄 Initial Code</h3>
+              <span className="code-status">First Generation</span>
+            </div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <CopyButton textToCopy={run.initial_code || run.code || ''} label="Copy Code" />
+            </div>
           </div>
           <pre className="code-block">
             {run.initial_code || run.code || 'No initial code available'}
@@ -136,9 +142,18 @@ function AdminPromptDetail() {
         </div>
 
         <div className="code-panel">
-          <div className="code-panel-header">
-            <h3>✨ Enhanced Code</h3>
-            <span className="code-status enhanced">After MAS Enhancement</span>
+          <div className="code-panel-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <h3>✨ Enhanced Code</h3>
+              <span className="code-status enhanced">After MAS Enhancement</span>
+            </div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <div className="score-pill" style={{ background: '#10b981', color: '#fff', padding: '6px 10px', borderRadius: 20 }}>
+                Score: {run.predicted_score?.toFixed(3) || 'N/A'}
+              </div>
+              <CopyButton textToCopy={run.predicted_score?.toFixed(3) || ''} label="Copy Score" />
+              <CopyButton textToCopy={run.code || ''} label="Copy Code" />
+            </div>
           </div>
           <pre className="code-block enhanced">
             {run.code || 'No enhanced code available'}
