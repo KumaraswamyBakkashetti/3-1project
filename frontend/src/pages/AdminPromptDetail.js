@@ -133,6 +133,10 @@ function AdminPromptDetail() {
               <span className="code-status">First Generation</span>
             </div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              {/* Show initial code score (if available) in the same style as enhanced score pill */}
+              <div className="score-pill" style={{ background: '#667eea', color: '#fff', padding: '6px 10px', borderRadius: 20 }}>
+                Score: {run.initial_score?.toFixed(3) || 'N/A'}
+              </div>
               <CopyButton textToCopy={run.initial_code || run.code || ''} label="Copy Code" />
             </div>
           </div>
@@ -151,7 +155,7 @@ function AdminPromptDetail() {
               <div className="score-pill" style={{ background: '#10b981', color: '#fff', padding: '6px 10px', borderRadius: 20 }}>
                 Score: {run.predicted_score?.toFixed(3) || 'N/A'}
               </div>
-              <CopyButton textToCopy={run.predicted_score?.toFixed(3) || ''} label="Copy Score" />
+              {/* Keep only one copy button for the enhanced code itself */}
               <CopyButton textToCopy={run.code || ''} label="Copy Code" />
             </div>
           </div>

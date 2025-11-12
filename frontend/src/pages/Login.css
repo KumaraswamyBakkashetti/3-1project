@@ -52,11 +52,14 @@
 
 .form-group input {
   width: 100%;
-  padding: 0.75rem;
-  border: 2px solid #ddd;
+  padding: 0 0.9rem;
+  height: 44px; /* consistent height with buttons */
+  line-height: 1.2;
+  box-sizing: border-box;
+  border: 1px solid #ddd;
   border-radius: 8px;
   font-size: 1rem;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, box-shadow 0.12s;
 }
 
 .form-group input:focus {
@@ -66,19 +69,24 @@
 
 button[type="submit"] {
   width: 100%;
-  padding: 1rem;
+  height: 44px; /* match input height */
+  padding: 0 1rem;
   background: #667eea;
   color: white;
   border: none;
   border-radius: 8px;
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.12s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 button[type="submit"]:hover:not(:disabled) {
   background: #5568d3;
+  transform: translateY(-1px);
 }
 
 button[type="submit"]:disabled {
@@ -103,15 +111,19 @@ button[type="submit"]:disabled {
 .back-button {
   width: 100%;
   margin-top: 1rem;
-  padding: 0.75rem;
+  height: 44px;
+  padding: 0 1rem;
   background: transparent;
   color: #667eea;
-  border: 2px solid #667eea;
+  border: 1px solid #667eea;
   border-radius: 8px;
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.14s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .back-button:hover {
