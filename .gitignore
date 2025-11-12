@@ -3,7 +3,6 @@
 *.env
 .env.local
 .env.*.local
-
 # Python
 __pycache__/
 *.py[cod]
@@ -79,8 +78,7 @@ yarn-error.log*
 *.sqlite3
 
 # Node modules (frontend)
-node_modules/
-frontend/node_modules/
+node_modules/*
 frontend/build/
 frontend/.env
 
