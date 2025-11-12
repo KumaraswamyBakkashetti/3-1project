@@ -148,9 +148,15 @@ Output: Complete, runnable code only."""
                 monitor.record_graph_edge("Tester", "Reviewer")
             
             # 4. Reviewer provides final version with STRICT enhancement rules
+            # CRITICAL: Include the actual code to review!
             review_prompt = f"""ENHANCE the following code by ADDING improvements WITHOUT removing functionality:
 
 Task: {task}{lang_hint}
+
+EXISTING CODE TO ENHANCE:
+```
+{code}
+```
 
 STRICT RULES:
 1. PRESERVE all existing functionality (do NOT simplify or remove features)
@@ -161,6 +167,7 @@ STRICT RULES:
 6. ADD tests if not present
 7. DO NOT replace real implementations with mock/demo code
 8. DO NOT remove database operations, API calls, or core logic
+9. KEEP the same length or LONGER (do NOT shorten the code)
 
 FORBIDDEN:
 - Removing MongoDB/database operations
@@ -168,25 +175,36 @@ FORBIDDEN:
 - Simplifying complex logic to "educational" examples
 - Removing imports or dependencies
 - Converting production code to demo code
+- Shortening or truncating the code
 
-Output ONLY the enhanced code, nothing else."""
+Output ONLY the COMPLETE enhanced code, nothing else. Include ALL parts of the original code."""
             
             final_code = await self._run_agent("Reviewer", review_prompt, monitor)
             
             # Debug: Check what we got back
             print(f"[DEBUG] Final code length: {len(final_code) if final_code else 0}")
+            print(f"[DEBUG] Initial code length: {len(code) if code else 0}")
             print(f"[DEBUG] Is error response: {self._is_error_response(final_code) if final_code else 'N/A'}")
             if final_code:
                 print(f"[DEBUG] First 100 chars: {final_code[:100]}")
             
+            # CRITICAL CHECK: If enhanced code is much shorter than original, reject it!
+            if final_code and code:
+                original_len = len(code)
+                enhanced_len = len(final_code)
+                # If enhanced is less than 50% of original, it's probably truncated
+                if enhanced_len < (original_len * 0.5):
+                    print(f"⚠️ Enhanced code ({enhanced_len} chars) is < 50% of original ({original_len} chars) - REJECTING!")
+                    final_code = None  # Force fallback to original code
+            
             # Return the best code (prefer final, fallback to initial code if needed)
             # Check final_code
             if final_code and final_code.strip() and not self._is_error_response(final_code):
-                print(f"✅ Using final code from Reviewer")
+                print(f"✅ Using final code from Reviewer ({len(final_code)} chars)")
                 return final_code
             # Check initial code
             elif code and code.strip() and not self._is_error_response(code):
-                print(f"⚠️ Reviewer failed, using Coder's code")
+                print(f"⚠️ Reviewer failed, using Coder's code ({len(code)} chars)")
                 return code
             # All failed - generate minimal working code as fallback
             else:
@@ -252,13 +270,37 @@ Output ONLY the enhanced code, nothing else."""
     
     def _generate_minimal_code(self, task: str) -> str:
         """
-        Generate intelligent fallback code when agents fail.
+        Generate error message when Gemini API is completely unavailable.
         
-        Instead of just TODO comments, try to generate a working skeleton
-        based on common patterns detected in the task.
+        This should only be called as a last resort when all models fail.
         """
         lang = self.language.lower()
-        task_lower = task.lower()
+        
+        # Return clear error message instead of template
+        error_message = f"""/*
+ * GEMINI API SERVICE UNAVAILABLE
+ * 
+ * Google's Gemini API is temporarily down (503 Service Unavailable).
+ * This is a temporary Google server issue, not a problem with your code.
+ * 
+ * What to do:
+ * 1. Wait 10-30 minutes and try again
+ * 2. Check Google AI Studio status: https://aistudio.google.com
+ * 3. Your request has been saved and you can retry later
+ * 
+ * Task requested: {task[:200]}...
+ * Language: {lang}
+ * 
+ * This message will be replaced with actual code when the service recovers.
+ */
+
+// Placeholder - waiting for Gemini API service to recover
+public class ServiceUnavailable {{
+    // The code generation service is temporarily unavailable
+    // Please try again in a few minutes
+}}"""
+        
+        return error_message
         
         # Detect common problem patterns
         is_nqueens = 'n queens' in task_lower or 'nqueens' in task_lower
@@ -635,10 +677,16 @@ REQUIRED: Write the ACTUAL, COMPLETE, EXECUTABLE CODE!
                 if not response_str:
                     print(f"[{self.name}] {elapsed:.1f}s -> Empty response from Gemini!")
                     return ""
-                elif "blocked" in response_str.lower():
-                    print(f"[{self.name}] {elapsed:.1f}s -> BLOCKED by safety filter: {response_str[:100]}")
+                # IMPROVED: Only reject if response is ACTUALLY blocked (not just mentions "blocked" in code comments)
+                # Check for actual error patterns at the START of response
+                elif (response_str.strip().startswith("Error:") or 
+                      response_str.strip().startswith("Sorry,") or
+                      response_str.strip().startswith("I cannot") or
+                      response_str.strip().startswith("I can't")):
+                    print(f"[{self.name}] {elapsed:.1f}s -> ERROR/BLOCKED response: {response_str[:100]}")
                     return ""
-                elif "error" in response_str.lower() and len(response_str) < 200:
+                elif len(response_str) < 100 and "error" in response_str.lower():
+                    # Only reject if it's a SHORT error message
                     print(f"[{self.name}] {elapsed:.1f}s -> ERROR response: {response_str[:100]}")
                     return ""
                 

@@ -51,10 +51,49 @@ function UserDashboard({ user, onLogout }) {
 
   const loadConversation = (run) => {
     // Load a previous conversation/run
-    setMessages([
+    const messages = [
       { type: 'bot', text: 'Previous conversation loaded.' },
-      { type: 'user', text: run.task },
-      {
+      { type: 'user', text: run.task }
+    ];
+    
+    // If there's initial code, show it first
+    if (run.initial_code && run.initial_code !== run.code) {
+      messages.push({
+        type: 'bot',
+        text: `✅ Initial code (fast): Score ${(run.initial_score || 0).toFixed(2)}`,
+        result: { 
+          code: run.initial_code, 
+          predicted_score: run.initial_score || 0,
+          run_id: run._id
+        },
+        isFullCode: true
+      });
+      
+      messages.push({
+        type: 'bot',
+        text: `🔄 Enhanced code (final): Score improved ${(run.initial_score || 0).toFixed(2)} → ${run.predicted_score.toFixed(2)}`,
+        result: {
+          code: run.code,
+          predicted_score: run.predicted_score,
+          features: run.features,
+          run_id: run._id,
+          monitor_data: run.monitor_data
+        },
+        isFullCode: true,
+        showComparison: true,
+        initialCode: run.initial_code,
+        finalCode: run.code
+      });
+      
+      setInitialResult({
+        code: run.initial_code,
+        predicted_score: run.initial_score || 0,
+        run_id: run._id
+      });
+      setShowEnhancedCode(true);
+    } else {
+      // No initial code, just show final result
+      messages.push({
         type: 'bot',
         text: `✅ MAS execution completed! Predicted score: ${run.predicted_score.toFixed(2)}`,
         result: {
@@ -64,18 +103,23 @@ function UserDashboard({ user, onLogout }) {
           result: run.code,
           code: run.code
         }
-      }
-    ]);
+      });
+      setShowEnhancedCode(false);
+    }
+    
+    setMessages(messages);
     setCurrentResult({
       run_id: run._id,
       predicted_score: run.predicted_score,
       features: run.features,
       result: run.code,
-      code: run.code
+      code: run.code,
+      initial_code: run.initial_code,
+      initial_score: run.initial_score,
+      monitor_data: run.monitor_data
     });
     setCurrentConversationId(run._id);
-    setShowEnhancedCode(false);
-    setShowDetailsPanel(false);
+    setShowDetailsPanel(true);  // Show details panel with agent stats
   };
 
   const handleSendMessage = async () => {

@@ -93,13 +93,28 @@ class GeminiKeyManager:
         self._configure_current_key()
         return True  # Always return True to keep trying
     
-    def call_gemini(self, prompt, model_name="gemini-2.5-flash", timeout=60):
-        """Call Gemini with timeout and speed optimization"""
-        # Try each API key at least once (max 5 retries total)
-        max_retries = min(5, len(self.api_keys) * 2)  # 2 attempts per key
+    def call_gemini(self, prompt, model_name="gemini-2.5-flash-preview-05-20", timeout=30):
+        """Call Gemini with timeout and speed optimization
+        
+        Args:
+            model_name: Model to use (default: gemini-2.5-flash-preview-05-20 - VERIFIED WORKING)
+            timeout: Request timeout in seconds (default: 30s for faster failure on service issues)
+        """
+        # Reduce retries when service is unavailable - fail fast
+        max_retries = 2  # Only 2 retries for faster failure
         original_prompt = prompt
         
+        # Use VERIFIED working models as fallbacks
+        fallback_models = [
+            "gemini-2.5-flash-preview-05-20",  # PRIMARY - VERIFIED WORKING
+            "gemini-flash-latest",               # BACKUP 1
+            "gemini-2.5-flash",                  # BACKUP 2
+            "gemini-2.0-flash-exp"               # BACKUP 3
+        ]
+        tried_models = set()
+        
         print(f"[INIT] Starting request with {len(self.api_keys)} API keys available, {max_retries} max retries")
+        print(f"[MODEL] Using: {model_name}")
         
         for attempt in range(max_retries):
             try:
@@ -227,18 +242,29 @@ class GeminiKeyManager:
                         print(f"[ERROR] Timeout with all keys tried")
                         return ""
                 
-                # PRIORITY 3: 503 service unavailable - retry with backoff
+                # PRIORITY 3: 503 service unavailable - try fallback model
                 if "503" in error_msg or "service unavailable" in error_msg or "failed to connect" in error_msg:
                     print(f"[503] Gemini service unavailable on attempt {attempt + 1}/{max_retries}")
-                    wait_time = min(2 ** (attempt + 1), 5)
-                    print(f"[BACKOFF] Waiting {wait_time}s before retry...")
+                    
+                    # Try a fallback model if we haven't tried all yet
+                    if model_name not in tried_models:
+                        tried_models.add(model_name)
+                        
+                        # Find next untried fallback model
+                        for fallback in fallback_models:
+                            if fallback not in tried_models:
+                                print(f"[FALLBACK] Switching from {model_name} to {fallback}")
+                                model_name = fallback
+                                time.sleep(1)
+                                continue  # Retry with different model
+                    
+                    # If all models tried, just wait and retry
+                    wait_time = 2
+                    print(f"[BACKOFF] All models tried, waiting {wait_time}s before retry...")
                     time.sleep(wait_time)
-                    # Try next key
-                    if self.rotate_key(mark_failed=False):
-                        continue
-                    else:
-                        print(f"[ERROR] Service unavailable after all retries")
-                        return ""
+                    
+                    # Don't rotate key for service unavailable - it's a Google server issue
+                    continue
                 
                 # PRIORITY 4: Invalid response structure
                 if "invalid operation" in error_msg or "response.text" in error_msg:

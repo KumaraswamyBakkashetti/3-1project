@@ -72,7 +72,7 @@ function UserDashboardSimple({ user, onLogout }) {
   };
 
   const loadConversation = (run) => {
-    setMessages([
+    const messages = [
       { 
         type: 'assistant', 
         text: '📂 Previous conversation loaded.',
@@ -82,19 +82,46 @@ function UserDashboardSimple({ user, onLogout }) {
         type: 'user',
         text: run.task,
         timestamp: new Date(run.created_at)
-      },
-      {
+      }
+    ];
+    
+    // If there's both initial and final code, show both
+    if (run.initial_code && run.initial_code !== run.code) {
+      messages.push({
+        type: 'assistant',
+        text: `🔄 Code generated with enhancement (Score improved: ${(run.initial_score || 0).toFixed(2)} → ${run.predicted_score.toFixed(2)})`,
+        initial_code: run.initial_code,
+        final_code: run.code,
+        metrics: {
+          initial_score: run.initial_score || 0,
+          final_score: run.predicted_score,
+          predicted_score: run.predicted_score,
+          features: run.features,
+          run_id: run._id,
+          monitor_data: run.monitor_data,
+          enhancement_loops: run.monitor_data?.enhancement_loops || 0
+        },
+        timestamp: new Date(run.created_at)
+      });
+    } else {
+      // Only final code available - show it as single code block
+      messages.push({
         type: 'assistant',
         text: '✅ Here\'s your code:',
-        code: run.code,
+        initial_code: run.code,  // Display as initial for consistent rendering
+        final_code: run.code,
         metrics: {
+          initial_score: run.predicted_score,
+          final_score: run.predicted_score,
           predicted_score: run.predicted_score,
           features: run.features,
           run_id: run._id
         },
         timestamp: new Date(run.created_at)
-      }
-    ]);
+      });
+    }
+    
+    setMessages(messages);
     setCurrentConversationId(run._id);
     setSidebarOpen(false); // Close sidebar on mobile
   };

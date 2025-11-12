@@ -504,8 +504,21 @@ async def run_mas(request: RunRequest, user = Depends(verify_token)):
                 
                 # Check if enhancement failed (error message, blocked, or too short)
                 enhancement_failed = False
-                if "Error:" in clean_code or "blocked" in clean_code.lower() or len(clean_code) < 100:
-                    print(f"⚠️ Enhancement failed or blocked, using initial code as final output")
+                
+                # IMPROVED: Better detection of failed enhancement
+                if not clean_code or len(clean_code.strip()) < 50:
+                    print(f"⚠️ Enhancement returned empty/very short code, using initial code")
+                    clean_code = initial_code
+                    auto_enhanced = False
+                    enhancement_failed = True
+                elif "Error:" in clean_code or "Exception" in clean_code or "Failed" in clean_code:
+                    print(f"⚠️ Enhancement returned error message, using initial code")
+                    clean_code = initial_code
+                    auto_enhanced = False
+                    enhancement_failed = True
+                elif len(clean_code) < len(initial_code) * 0.3:
+                    # Enhanced code is less than 30% of initial - probably a template/fallback
+                    print(f"⚠️ Enhanced code ({len(clean_code)} chars) much shorter than initial ({len(initial_code)} chars), using initial code")
                     clean_code = initial_code
                     auto_enhanced = False
                     enhancement_failed = True
