@@ -72,6 +72,23 @@ function UserDashboardSimple({ user, onLogout }) {
   };
 
   const loadConversation = (run) => {
+    // Normalize the run data so the chat renderer (which expects
+    // `initial_code` and `final_code`, and `metrics.initial_score`/`final_score`)
+    // can display historical runs the same way as freshly generated ones.
+    const initialCode = run.initial_code || run.code || '';
+    const finalCode = run.code || run.final_code || initialCode;
+
+    const metrics = {
+      initial_score: run.initial_score ?? run.predicted_score ?? 0,
+      final_score: run.predicted_score ?? run.final_score ?? run.initial_score ?? 0,
+      enhancement_loops: run.enhancement_loops || 0,
+      auto_enhanced: run.auto_enhanced || false,
+      features: run.features || {},
+      run_id: run._id,
+      agent_stats: run.monitor_data?.agent_stats || run.agent_stats || null,
+      monitor_data: run.monitor_data || null
+    };
+
     setMessages([
       { 
         type: 'assistant', 
@@ -86,12 +103,10 @@ function UserDashboardSimple({ user, onLogout }) {
       {
         type: 'assistant',
         text: '✅ Here\'s your code:',
-        code: run.code,
-        metrics: {
-          predicted_score: run.predicted_score,
-          features: run.features,
-          run_id: run._id
-        },
+        // populate fields that the renderer expects
+        initial_code: initialCode,
+        final_code: finalCode,
+        metrics,
         timestamp: new Date(run.created_at)
       }
     ]);

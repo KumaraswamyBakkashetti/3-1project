@@ -25,7 +25,7 @@ const AdminAnalytics = () => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('http://localhost:8080/admin/all_runs');
+      const response = await fetch('http://localhost:8081/admin/all_runs');
       
       if (!response.ok) {
         throw new Error(`Failed to fetch runs: ${response.status}`);

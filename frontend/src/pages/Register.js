@@ -28,7 +28,7 @@ function Register({ onLogin }) {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:8080/api/register', {
+      const response = await axios.post('http://localhost:8081/api/register', {
         username,
         password
       });

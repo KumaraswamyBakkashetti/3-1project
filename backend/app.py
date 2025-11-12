@@ -731,5 +731,5 @@ async def export_csv(user = Depends(verify_token)):
 
 if __name__ == "__main__":
     import uvicorn
-    print("AgentMonitor API - http://localhost:8080")
-    uvicorn.run(app, host="0.0.0.0", port=8080)
+    print("AgentMonitor API - http://localhost:8081")
+    uvicorn.run(app, host="0.0.0.0", port=8081)
