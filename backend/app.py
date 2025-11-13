@@ -511,7 +511,9 @@ async def run_mas(request: RunRequest, user = Depends(verify_token)):
                     clean_code = initial_code
                     auto_enhanced = False
                     enhancement_failed = True
-                elif "Error:" in clean_code or "Exception" in clean_code or "Failed" in clean_code:
+                # FIXED: Only reject if it's ACTUALLY an error message (short + has error keywords)
+                # Don't reject valid code that contains error handling (try/catch/Exception classes)
+                elif len(clean_code.strip()) < 200 and any(keyword in clean_code for keyword in ["Error:", "Failed:", "blocked", "service unavailable", "GEMINI API SERVICE UNAVAILABLE"]):
                     print(f"⚠️ Enhancement returned error message, using initial code")
                     clean_code = initial_code
                     auto_enhanced = False

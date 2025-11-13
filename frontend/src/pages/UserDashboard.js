@@ -411,8 +411,20 @@ function UserDashboard({ user, onLogout }) {
                           <span className="code-icon">📝</span>
                           <h3>Initial Generated Code</h3>
                         </div>
-                        <div className="score-badge initial-score">
-                          Score: {initialResult.predicted_score.toFixed(2)}
+                        <div className="header-actions">
+                          <button 
+                            className="copy-code-btn"
+                            onClick={() => {
+                              navigator.clipboard.writeText(initialResult.code || initialResult.result || '');
+                              alert('Initial code copied to clipboard!');
+                            }}
+                            title="Copy initial code to clipboard"
+                          >
+                            📋 Copy
+                          </button>
+                          <div className="score-badge initial-score">
+                            Score: {initialResult.predicted_score.toFixed(2)}
+                          </div>
                         </div>
                       </div>
                       <div className="code-block-body">
@@ -427,8 +439,20 @@ function UserDashboard({ user, onLogout }) {
                           <span className="code-icon">✨</span>
                           <h3>Enhanced Code</h3>
                         </div>
-                        <div className="score-badge enhanced-score">
-                          Score: {currentResult.predicted_score.toFixed(2)}
+                        <div className="header-actions">
+                          <button 
+                            className="copy-code-btn"
+                            onClick={() => {
+                              navigator.clipboard.writeText(currentResult.code || currentResult.result || '');
+                              alert('Enhanced code copied to clipboard!');
+                            }}
+                            title="Copy enhanced code to clipboard"
+                          >
+                            📋 Copy
+                          </button>
+                          <div className="score-badge enhanced-score">
+                            Score: {currentResult.predicted_score.toFixed(2)}
+                          </div>
                         </div>
                       </div>
                       <div className="code-block-body">
@@ -447,8 +471,20 @@ function UserDashboard({ user, onLogout }) {
                           <span className="code-icon">💻</span>
                           <h3>Generated Code</h3>
                         </div>
-                        <div className="score-badge">
-                          Score: {currentResult.predicted_score.toFixed(2)}
+                        <div className="header-actions">
+                          <button 
+                            className="copy-code-btn"
+                            onClick={() => {
+                              navigator.clipboard.writeText(currentResult.code || currentResult.result || '');
+                              alert('Code copied to clipboard!');
+                            }}
+                            title="Copy code to clipboard"
+                          >
+                            📋 Copy
+                          </button>
+                          <div className="score-badge">
+                            Score: {currentResult.predicted_score.toFixed(2)}
+                          </div>
                         </div>
                       </div>
                       <div className="code-block-body">

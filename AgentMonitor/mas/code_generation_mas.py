@@ -99,7 +99,17 @@ FORBIDDEN:
         if not self.use_full_mas:
             # FAST MODE: Coder only for speed
             print(f"⚡ FAST MODE: Using Coder only ({self.language})")
-            simple_prompt = f"{task}{lang_hint}\n\nIMPORTANT: Generate COMPLETE, PRODUCTION-READY code. Do NOT use mock data or placeholders."
+            simple_prompt = f"""{task}{lang_hint}
+
+IMPORTANT: Generate COMPLETE, PRODUCTION-READY, OPTIMIZED code.
+
+REQUIREMENTS:
+- NO mock data or placeholders
+- Use OPTIMAL algorithms (best time/space complexity)
+- Add complexity comments (// Time: O(n), Space: O(1))
+- Efficient data structures (HashMap, TreeMap, PriorityQueue as needed)
+
+Output: Complete optimized code only."""
             code = await self._run_agent("Coder", simple_prompt, monitor)
             return code
         else:
@@ -122,7 +132,7 @@ Output: Brief technical analysis (3-5 points)"""
             if monitor:
                 monitor.record_graph_edge("Analyzer", "Coder")
             
-            # 2. Coder generates COMPLETE production code
+            # 2. Coder generates COMPLETE production code with optimizations
             code_prompt = f"""{task}{lang_hint}
 
 REQUIREMENTS:
@@ -132,7 +142,15 @@ REQUIREMENTS:
 - If database/API is mentioned, implement it FULLY
 - Do NOT use mock data unless explicitly requested
 
-Output: Complete, runnable code only."""
+⚡ OPTIMIZATION REQUIREMENTS:
+- Use OPTIMAL time complexity algorithms (avoid brute force when better solutions exist)
+- Minimize space complexity (use in-place operations where appropriate)
+- Choose efficient data structures (HashMap for O(1) lookup, PriorityQueue for min/max, etc.)
+- For Dynamic Programming problems: use bottom-up with space optimization
+- For Search/Sort: use optimal algorithms (Binary Search O(log n), QuickSort O(n log n))
+- Add complexity analysis as comments (e.g., // Time: O(n log n), Space: O(1))
+
+Output: Complete, runnable, optimized code only."""
             code = await self._run_agent("Coder", code_prompt, monitor)
             
             # Record edge: Coder -> Tester
@@ -169,6 +187,14 @@ STRICT RULES:
 8. DO NOT remove database operations, API calls, or core logic
 9. KEEP the same length or LONGER (do NOT shorten the code)
 
+⚡ OPTIMIZATION REQUIREMENTS:
+10. OPTIMIZE Time Complexity - Use efficient algorithms (avoid O(n²) when O(n log n) is possible)
+11. OPTIMIZE Space Complexity - Minimize memory usage, use in-place operations where appropriate
+12. ADD complexity analysis comments (e.g., "// Time: O(n log n), Space: O(1)")
+13. REPLACE brute-force approaches with optimal algorithms (Dynamic Programming, Binary Search, Hash Maps, etc.)
+14. AVOID redundant loops, unnecessary data structures, or repeated computations
+15. USE appropriate data structures (HashMap for O(1) lookup, TreeMap for sorted data, etc.)
+
 FORBIDDEN:
 - Removing MongoDB/database operations
 - Replacing real CRUD with mock data
@@ -176,8 +202,9 @@ FORBIDDEN:
 - Removing imports or dependencies
 - Converting production code to demo code
 - Shortening or truncating the code
+- Using inefficient algorithms when better ones exist
 
-Output ONLY the COMPLETE enhanced code, nothing else. Include ALL parts of the original code."""
+Output ONLY the COMPLETE enhanced code, nothing else. Include ALL parts of the original code with optimizations."""
             
             final_code = await self._run_agent("Reviewer", review_prompt, monitor)
             
@@ -247,23 +274,34 @@ Output ONLY the COMPLETE enhanced code, nothing else. Include ALL parts of the o
             return response
     
     def _is_error_response(self, text: str) -> bool:
-        """Check if response is an error message"""
+        """OPTIMIZED: Check if response is an error message (not valid code with error handling)"""
         if not text or not text.strip():
             return True
         
         text_lower = text.lower()
+        text_len = len(text.strip())
+        
+        # OPTIMIZATION 1: If code is long (> 500 chars), it's probably real code, not an error
+        # Even if it contains error-handling keywords like Exception, try, catch
+        if text_len > 500:
+            # Check if it starts with actual error messages
+            if text.strip().startswith(("Error:", "Failed:", "Exception:", "/*\n * GEMINI API")):
+                return True
+            # Otherwise it's likely valid code with error handling
+            return False
+        
+        # OPTIMIZATION 2: For shorter code, check more carefully
         error_indicators = [
             "error:",
             "blocked",
             "safety filter",
-            "failed",
-            "exception",
-            "could not",
-            "unable to"
+            "service unavailable",
+            "api service unavailable",
+            "gemini api service unavailable"
         ]
         
-        # Check if text is ONLY an error (short and contains error keywords)
-        if len(text.strip()) < 150 and any(indicator in text_lower for indicator in error_indicators):
+        # Check if text is ONLY an error (short and contains error keywords at start)
+        if text_len < 200 and any(indicator in text_lower for indicator in error_indicators):
             return True
         
         return False

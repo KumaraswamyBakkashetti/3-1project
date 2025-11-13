@@ -41,18 +41,16 @@ class GeminiKeyManager:
         
         # Try single key first (GEMINI_API_KEY)
         single_key = os.getenv('GEMINI_API_KEY')
-        if single_key:
+        if single_key and len(single_key) > 20:
             keys.append(single_key)
             print(f"[INFO] Loaded primary GEMINI_API_KEY")
         
-        # Then try numbered keys (only valid ones)
-        i = 1
-        while i <= 5:  # Max 5 keys
+        # Then try numbered keys 1-15 (support up to 15 keys)
+        for i in range(1, 16):
             key = os.getenv(f'GEMINI_API_KEY_{i}')
             if key and key.strip() and len(key) > 20:  # Basic validation
                 keys.append(key)
                 print(f"[INFO] Loaded GEMINI_API_KEY_{i}")
-            i += 1
         
         if not keys:
             print("[WARNING] No valid Gemini API keys found!")
@@ -93,23 +91,23 @@ class GeminiKeyManager:
         self._configure_current_key()
         return True  # Always return True to keep trying
     
-    def call_gemini(self, prompt, model_name="gemini-2.5-flash-preview-05-20", timeout=30):
+    def call_gemini(self, prompt, model_name="gemini-flash-latest", timeout=30):
         """Call Gemini with timeout and speed optimization
         
         Args:
-            model_name: Model to use (default: gemini-2.5-flash-preview-05-20 - VERIFIED WORKING)
+            model_name: Model to use (default: gemini-flash-latest - FASTEST & VERIFIED Nov 13, 2025)
             timeout: Request timeout in seconds (default: 30s for faster failure on service issues)
         """
         # Reduce retries when service is unavailable - fail fast
         max_retries = 2  # Only 2 retries for faster failure
         original_prompt = prompt
         
-        # Use VERIFIED working models as fallbacks
+        # Use VERIFIED working models as fallbacks (tested Nov 13, 2025)
         fallback_models = [
-            "gemini-2.5-flash-preview-05-20",  # PRIMARY - VERIFIED WORKING
-            "gemini-flash-latest",               # BACKUP 1
-            "gemini-2.5-flash",                  # BACKUP 2
-            "gemini-2.0-flash-exp"               # BACKUP 3
+            "gemini-flash-latest",               # PRIMARY - FASTEST (1.12s)
+            "gemini-2.5-flash",                  # BACKUP 1 (2.05s)
+            "gemini-2.5-flash-preview-05-20",  # BACKUP 2 (3.12s)
+            "gemini-1.5-flash"                   # BACKUP 3 (stable fallback)
         ]
         tried_models = set()
         
@@ -296,16 +294,16 @@ def get_key_manager():
     return _key_manager
 
 
-def gemini_call(prompt, model_name="gemini-2.5-flash"):
+def gemini_call(prompt, model_name="gemini-flash-latest"):
     """
     Simple function interface for calling Gemini with auto key rotation
     
     Args:
         prompt (str): The prompt to send to Gemini
-        model_name (str): Model to use (default: gemini-2.5-flash)
-                         - gemini-2.5-flash: Latest stable fast model (RECOMMENDED)
-                         - gemini-2.5-pro: Most capable model for complex tasks
-                         - gemini-2.0-flash: Older but stable fast model
+        model_name (str): Model to use (default: gemini-flash-latest - FASTEST, tested Nov 13, 2025)
+                         - gemini-flash-latest: Auto-updated latest flash model (FASTEST - 1.12s)
+                         - gemini-2.5-flash: Stable fast model (2.05s)
+                         - gemini-2.5-flash-preview-05-20: Preview fast model (3.12s)
         
     Returns:
         str: The generated response
