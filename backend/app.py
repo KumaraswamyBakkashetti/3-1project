@@ -25,7 +25,7 @@ if not GEMINI_API_KEY:
     print("   Set it using: $env:GEMINI_API_KEY='your_key_here'")
 else:
     # Do NOT print the key or parts of it to avoid leaking secrets in logs
-    print("✅ agent API key loaded (value hidden for security)")
+    print("Model is loading.......")
     # Set it in environment to ensure all modules use it
     os.environ['GEMINI_API_KEY'] = GEMINI_API_KEY
 
