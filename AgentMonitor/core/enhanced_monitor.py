@@ -373,7 +373,8 @@ Reply with ONLY the numeric score (e.g., 0.45). BE HARSH!"""
                 
                 # Log for debugging - see if Groq gives varied scores
                 if self.debug:
-                    print(f"[{agent_name}] Groq scored: {score:.3f} | Response: {score_text[:50]}")
+                    # Use generic 'agent' in logs to avoid leaking provider names
+                    print(f"[{agent_name}] agent scored: {score:.3f} | Response: {score_text[:50]}")
                 
                 return score  # Trust Groq's honest scoring
             else:

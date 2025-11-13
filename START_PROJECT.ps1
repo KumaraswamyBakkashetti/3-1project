@@ -31,9 +31,12 @@ try {
 Write-Host ""
 Write-Host "Setting up environment..." -ForegroundColor Yellow
 
-# Set API key environment variable (critical for backend)
-$env:GEMINI_API_KEY = "AIzaSyCALdYnS-PTEo_kumar9NUtKpkxipfOoCE"
-Write-Host "✓ API key configured" -ForegroundColor Green
+# Check for API key in environment (do not hardcode keys here)
+if ($env:GEMINI_API_KEY) {
+    Write-Host "✓ agent API key found (value hidden)" -ForegroundColor Green
+} else {
+    Write-Host "⚠️ agent API key not set. Please set GEMINI_API_KEY in your environment before starting the backend." -ForegroundColor Yellow
+}
 
 Write-Host ""
 Write-Host "Starting servers..." -ForegroundColor Yellow
@@ -42,7 +45,7 @@ Write-Host ""
 # Start Backend (Python FastAPI)
 Write-Host "Starting Backend Server (port 8080)..." -ForegroundColor Cyan
 Start-Process powershell -ArgumentList "-NoExit", "-Command", `
-    "`$env:GEMINI_API_KEY='AIzaSyCALdYnS-PTEo_kumar9NUtKpkxipfOoCE' ; cd '$PSScriptRoot\backend' ; python app.py" `
+    "cd '$PSScriptRoot\backend' ; python app.py" `
     -WindowStyle Normal
 
 Start-Sleep -Seconds 3

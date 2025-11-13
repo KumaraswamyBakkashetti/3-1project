@@ -21,10 +21,11 @@ load_dotenv()
 # CRITICAL: Ensure Gemini API key is available
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 if not GEMINI_API_KEY:
-    print("⚠️  WARNING: GEMINI_API_KEY not found in environment!")
+    print("⚠️  WARNING: agent API key not found in environment!")
     print("   Set it using: $env:GEMINI_API_KEY='your_key_here'")
 else:
-    print(f"✅ Gemini API Key loaded: {GEMINI_API_KEY[:25]}...{GEMINI_API_KEY[-10:]}")
+    # Do NOT print the key or parts of it to avoid leaking secrets in logs
+    print("✅ agent API key loaded (value hidden for security)")
     # Set it in environment to ensure all modules use it
     os.environ['GEMINI_API_KEY'] = GEMINI_API_KEY
 
@@ -292,12 +293,12 @@ async def run_mas(request: RunRequest, user = Depends(verify_token)):
         from AgentMonitor import EnhancedAgentMonitor, CodeGenerationMAS, MASPredictor
         from AgentMonitor.gemini_api import gemini_call
         from AgentMonitor.groq_api import groq_call
-        
-        # DUAL-LLM SETUP: Gemini for code generation, Groq (FREE) for judging
-        llm = gemini_call  # Code generation (powerful model)
-        judge_llm = groq_call  # Scoring/feedback (FREE, fast model)
-        
-        print("🎯 Using dual-LLM: Gemini (generation) + Groq (FREE judging)")
+
+        # DUAL-LLM SETUP: agent for code generation, agent for judging
+        llm = gemini_call  # Code generation (agent)
+        judge_llm = groq_call  # Scoring/feedback (agent)
+
+        print("🎯 Using dual-LLM: agent (generation) + agent (judging)")
         
         # Determine if this is an enhancement request or initial request
         is_enhancement = bool(request.code and request.code.strip())

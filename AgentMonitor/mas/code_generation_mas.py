@@ -589,7 +589,7 @@ REQUIRED: Write the ACTUAL, COMPLETE, EXECUTABLE CODE!
                 
                 # Check if response is blocked or error
                 if not response_str:
-                    print(f"[{self.name}] {elapsed:.1f}s -> Empty response from Gemini!")
+                    print(f"[{self.name}] {elapsed:.1f}s -> Empty response from agent")
                     return ""
                 elif "blocked" in response_str.lower():
                     print(f"[{self.name}] {elapsed:.1f}s -> BLOCKED by safety filter: {response_str[:100]}")

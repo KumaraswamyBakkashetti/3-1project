@@ -32,21 +32,23 @@ class GeminiKeyManager:
         single_key = os.getenv('GEMINI_API_KEY')
         if single_key:
             keys.append(single_key)
-            print(f"[INFO] Loaded primary GEMINI_API_KEY")
+            # Do not print keys or key fragments to avoid leaking secrets
+            print(f"[INFO] Loaded primary agent API key")
         
         # Then try numbered keys (only valid ones)
         i = 1
         while i <= 5:  # Max 5 keys
             key = os.getenv(f'GEMINI_API_KEY_{i}')
-            if key and key.strip() and len(key) > 20:  # Basic validation
-                keys.append(key)
-                print(f"[INFO] Loaded GEMINI_API_KEY_{i}")
+                if key and key.strip() and len(key) > 20:  # Basic validation
+                    keys.append(key)
+                    # Avoid printing key material; log that a numbered key was found
+                    print(f"[INFO] Loaded agent API key #{i}")
             i += 1
         
         if not keys:
-            print("[WARNING] No valid Gemini API keys found!")
+            print("[WARNING] No valid agent API keys found!")
         else:
-            print(f"[INFO] Total valid API keys loaded: {len(keys)}")
+            print(f"[INFO] Total valid agent API keys loaded: {len(keys)}")
         
         return keys
     
@@ -55,7 +57,8 @@ class GeminiKeyManager:
         if self.current_key_index < len(self.api_keys):
             current_key = self.api_keys[self.current_key_index]
             genai.configure(api_key=current_key)
-            print(f"[INFO] Using Gemini API key #{self.current_key_index + 1}")
+            # Do NOT log the key value or index in production logs
+            print(f"[INFO] Configured agent API key for requests")
         else:
             raise Exception("All API keys exhausted")
     
@@ -88,7 +91,7 @@ class GeminiKeyManager:
         max_retries = min(5, len(self.api_keys) * 2)  # 2 attempts per key
         original_prompt = prompt
         
-        print(f"[INIT] Starting request with {len(self.api_keys)} API keys available, {max_retries} max retries")
+        print(f"[INIT] Starting agent request with {len(self.api_keys)} keys available, {max_retries} max retries")
         
         for attempt in range(max_retries):
             try:
@@ -169,7 +172,7 @@ class GeminiKeyManager:
                 
                 # If we get here, the response was blocked or empty
                 finish_reason = getattr(response.candidates[0], 'finish_reason', 'UNKNOWN') if response.candidates else 'NO_CANDIDATES'
-                print(f"[WARNING] Gemini response blocked or empty. Finish reason: {finish_reason}")
+                print(f"[WARNING] agent response blocked or empty. Finish reason: {finish_reason}")
                 
                 # Check if it's a safety block (finish_reason 2 = SAFETY)
                 if str(finish_reason) == '2' or str(finish_reason) == 'SAFETY':
@@ -196,9 +199,9 @@ class GeminiKeyManager:
                 
                 # PRIORITY 1: Rate limit / Quota errors - IMMEDIATELY switch key
                 if any(err in error_msg for err in ["quota", "429", "rate limit", "resource exhausted", "resource_exhausted"]):
-                    print(f"[RATE LIMIT] API key #{self.current_key_index + 1} quota exceeded!")
+                    print(f"[RATE LIMIT] agent API key quota exceeded for current key")
                     if self.rotate_key(mark_failed=True):
-                        print(f"[AUTO-SWITCH] Retrying with new API key...")
+                        print(f"[AUTO-SWITCH] Retrying with different agent key...")
                         time.sleep(0.5)
                         continue
                     else:
@@ -207,9 +210,9 @@ class GeminiKeyManager:
                 
                 # PRIORITY 2: Timeout errors - try different key
                 if "timeout" in error_msg or "timed out" in error_msg or "deadline exceeded" in error_msg:
-                    print(f"[TIMEOUT] Request timed out on attempt {attempt + 1}/{max_retries}")
+                    print(f"[TIMEOUT] Agent request timed out on attempt {attempt + 1}/{max_retries}")
                     if self.rotate_key(mark_failed=False):  # Don't mark as permanently failed
-                        print(f"[AUTO-SWITCH] Trying different API key...")
+                        print(f"[AUTO-SWITCH] Trying different agent key...")
                         time.sleep(1)
                         continue
                     else:
@@ -218,7 +221,7 @@ class GeminiKeyManager:
                 
                 # PRIORITY 3: 503 service unavailable - retry with backoff
                 if "503" in error_msg or "service unavailable" in error_msg or "failed to connect" in error_msg:
-                    print(f"[503] Gemini service unavailable on attempt {attempt + 1}/{max_retries}")
+                    print(f"[503] agent service unavailable on attempt {attempt + 1}/{max_retries}")
                     wait_time = min(2 ** (attempt + 1), 5)
                     print(f"[BACKOFF] Waiting {wait_time}s before retry...")
                     time.sleep(wait_time)
@@ -241,10 +244,10 @@ class GeminiKeyManager:
                         return ""
                 
                 # PRIORITY 5: Other errors - log and return empty
-                print(f"[ERROR] API call failed: {error_msg[:150]}")
+                    print(f"[ERROR] agent API call failed: {error_msg[:150]}")
                 return ""
         
-        print(f"[ERROR] Failed after {max_retries} retries")
+        print(f"[ERROR] agent request failed after {max_retries} retries")
         return ""  # Return empty, not error message
 
 
